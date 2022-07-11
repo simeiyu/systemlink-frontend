@@ -1,0 +1,21 @@
+{
+  "name": "systemlink-fontend",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@antv/x6": "^1.32.8",
+    "axios": "^0.27.2",
+    "less": "^4.1.3",
+    "vue": "^3.2.25",
+    "vue-router": "^4.1.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^2.3.3",
+    "vite": "^2.9.9"
+  }
+}
