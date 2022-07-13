@@ -40,7 +40,7 @@ export default defineConfig({
     server: {
         host: "0.0.0.0", // 指定服务器主机名
         port: 8688, // 指定服务端口号
-        open: true, // 运行自动打开浏览器
+        open: false, // 运行自动打开浏览器
         // https: false, // 关闭https
         strictPort: true, // 若3333端口被占用,直接结束项目
         proxy: {

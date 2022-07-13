@@ -1,6 +1,6 @@
 <template>
-  <div class="rect-item" :style="{width:width+'px',height:height+'px'}"
-  >{{ label }}{{ nodeLabel }}
+  <div class="rect-item" :style="{width:width+'px',height:height+'px'}">
+    <div class="title"> {{ label }}{{ nodeLabel }} </div>
   </div>
 </template>
 
@@ -8,7 +8,7 @@
 import {inject, onMounted, ref} from "vue";
 
 export default {
-  name: "components",
+  name: "switchNode",
   props: {
     label: String,
     width: Number,
@@ -56,5 +56,19 @@ export default {
   border: solid 2px rgb(95, 149, 255);
   text-align: center;
   box-sizing: border-box;
+  position: relative;
+  .title{
+    text-align: left;
+    font-size: 14px;
+    font-weight: bold;
+    .btn{
+      z-index: 5;
+    }
+  }
+  .in-item{
+    background: #fff;
+    height: 20%;
+    margin: 10px;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
-  <div class="rect-item" :style="{width:width+'px',height:height+'px'}"
-  >{{ label }}{{ nodeLabel }}
+  <div class="rect-item" :style="{width:width+'px',height:height+'px'}">
+    <div class="title"> {{ label }}{{ nodeLabel }}</div>
   </div>
 </template>
 
@@ -56,5 +56,14 @@ export default {
   border: solid 2px rgb(95, 149, 255);
   text-align: center;
   box-sizing: border-box;
+  position: relative;
+  .title{
+    position: absolute;
+    left: 0;
+    top: 0;
+    text-align: left;
+    font-size: 14px;
+    font-weight: bold;
+  }
 }
 </style>

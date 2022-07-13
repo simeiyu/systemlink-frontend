@@ -1,27 +1,50 @@
 <template>
-  <div id="container" @drop="dropNode" @dragover="allowDrop"></div>
+  <div id="container" @drop="dropNode" ></div>
   <div class="prop">
     <div v-for="(value,key) in cusModel">
-      {{ key }} <input type="text" v-model="cusModel[key]">
+      <div v-if="typeof cusModel[key] !=='object'">
+        {{ key }} <input type="text" v-model="cusModel[key]">
+      </div>
+      <div v-else>
+        {{key}}:
+        <div v-for="(inValue,inKey) in cusModel[key]" style="margin-left: 20px">
+          {{ inKey }} <input type="text" v-model="cusModel[key][inKey]">
+        </div>
+      </div>
     </div>
 
     <button @click="getConfig">导出</button>
     <button @click="importJson()">导入</button>
-    <button @click="addGroup()">组合</button>
+<!--    <button @click="addGroup()">组合</button>-->
     <p>
       <textarea v-model="jsonInfo" style="height: 500px;width: 99%;"></textarea>
     </p>
     <div class="line">
-      <myRect v-for="i in 4" :label="'test'+i" :width="nodeConfig.rect.width" :height="nodeConfig.rect.height"></myRect>
+      <myRect v-for="i in 4" :label="'test'+i"
+              @mousedown="dropNode($event,'myRect','test'+i)"
+              :width="nodeConfig.myRect.width" :height="nodeConfig.myRect.height"></myRect>
+    </div>
+    <div class="line">
+      <loopNode :width="nodeConfig.loopNode.width" :height="nodeConfig.loopNode.height"
+                 @mousedown="dropNode($event,'loopNode','循环组件')"
+                 label="循环组件">
+
+      </loopNode>
+      <switch-node :width="nodeConfig.loopNode.width" :height="nodeConfig.loopNode.height"
+                   @mousedown="dropNode($event,'switchNode','循环组件')"
+                   label="switch组件">
+      </switch-node>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 
-import { Graph,Addon, Rectangle, Shape} from '@antv/x6';
+import {Graph, Addon, Rectangle, Shape, Dom,Node} from '@antv/x6';
 const {Dnd} = Addon
 import myRect from './myRect.vue';
+import loopNode from './loopNode.vue'
+import switchNode from './switchNode.vue'
 import {Ref, ref, defineComponent, reactive, UnwrapNestedRefs, onMounted} from 'vue'
 import '@antv/x6-vue-shape'
 
@@ -105,19 +128,60 @@ const ports = {
 }
 export default {
   name: "index",
-  components: {myRect},
+  components: {myRect,loopNode,switchNode},
   setup() {
     let cusModel = ref({});
     let jsonInfo = ref("");
     let graph: Graph;
+    let dnd:Addon.Dnd;
     const nodeConfig = {
-      rect: {
-        width: 120,
-        height: 60,
+      myRect: {
+        width: 80,
+        height: 30,
+      },
+      loopNode:{
+        width: 240,
+        height: 100,
+      },
+      switchNode:{
+        width: 240,
+        height: 100,
       }
     }
 
     function initMap() {
+      //注册组件节点
+      Graph.registerVueComponent(
+          "myRect",
+          {
+            template: `<myRect/>`,
+            components: {
+              myRect,
+            },
+          },
+          true
+      );
+      Graph.registerVueComponent(
+          "loopNode",
+          {
+            template: `<loopNode/>`,
+            components: {
+              loopNode,
+            },
+          },
+          true
+      );
+      Graph.registerVueComponent(
+          "switchNode",
+          {
+            template: `<switchNode/>`,
+            components: {
+              switchNode,
+            },
+          },
+          true
+      );
+      //------------------------------
       graph = new Graph({
         container: document.getElementById('container')!,
         grid: true,
@@ -131,9 +195,6 @@ export default {
         connecting: {
           router: {
             name: 'manhattan',
-            args: {
-              padding: 1,
-            },
           },
           connector: {
             name: 'rounded',
@@ -160,7 +221,7 @@ export default {
                   },
                 },
               },
-              zIndex: 0,
+              zIndex: 1,
             })
           },
           validateConnection({targetMagnet}) {
@@ -178,56 +239,85 @@ export default {
             },
           },
         },
-        resizing: true,
-        rotating: true,
         selecting: {
           enabled: true,
           rubberband: true,
           showNodeSelectionBox: true,
         },
+        embedding: {
+          enabled: true,
+          findParent({ node }) {
+            const bbox = node.getBBox()
+            return this.getNodes().filter((node) => {
+              // 只有 data.parent 为 true 的节点才是父节点
+              const data = node.getData<any>()
+              if (data && data.parent) {
+                const targetBBox = node.getBBox()
+                if(node.zIndex) node.zIndex-=1;
+                return bbox.isIntersectWithRect(targetBBox)
+              }
+              return false
+            })
+          }
+        },
         snapline: true,
-        keyboard: true,
-        clipboard: true,
       });
-      //注册组件节点
+      dnd = new Addon.Dnd({
+        target: graph,
+        scaled: false,
+        animation: true,
+        validateNode(droppingNode:any, options:any) {
+          return droppingNode.shape === 'html'
+              ? new Promise<boolean>((resolve) => {
+                const { draggingNode, draggingGraph } = options
+                const view = draggingGraph.findView(draggingNode)
+                const contentElem = view.findOne('foreignObject > body > div')
+                Dom.addClass(contentElem, 'validating')
+                setTimeout(() => {
+                  Dom.removeClass(contentElem, 'validating')
+                  resolve(true)
+                }, 3000)
+              })
+              : true
+        },
+      })
       graph.on('node:click', ({e, x, y, node, view}) => {
         console.log(node)
-        cusModel.value = node.attrs?.customer as Object;
+        cusModel.value = node.data as Object;
       })
-      graph.on('node:change:size', ({node, options}) => {
-        if (options.skipParentHandler) {
-          return
+      // 控制连接桩显示/隐藏
+      const showPorts = (ports: NodeListOf<SVGElement>, show: boolean) => {
+        for (let i = 0, len = ports.length; i < len; i = i + 1) {
+          ports[i].style.visibility = show ? 'visible' : 'hidden'
         }
-
-        const children = node.getChildren()
-        if (children && children.length) {
-          node.prop('originSize', node.getSize())
-        }
+      }
+      graph.on('node:mouseenter', () => {
+        const container = document.getElementById('container')!
+        const ports = container.querySelectorAll(
+            '.x6-port-body',
+        ) as NodeListOf<SVGElement>
+        showPorts(ports, true)
       })
-
-      graph.on('node:change:position', ({node, options}) => {
-        if (options.skipParentHandler) {
-          return
-        }
-
-        const children = node.getChildren()
-        if (children && children.length) {
-          node.prop('originPosition', node.getPosition())
-        }
-
-        const parent = node.getParent()
-        if (parent && parent.isNode()) {
-          let originSize = parent.prop('originSize')
+      graph.on('node:mouseleave', () => {
+        const container = document.getElementById('container')!
+        const ports = container.querySelectorAll(
+            '.x6-port-body',
+        ) as NodeListOf<SVGElement>
+        showPorts(ports, false)
+      })
+      graph.on('node:embedded', ({ node, currentParent }) => {
+        if (currentParent && currentParent.isNode()) {
+          let originSize = currentParent.prop('originSize')
           if (originSize == null) {
-            parent.prop('originSize', parent.getSize())
+            currentParent.prop('originSize', currentParent.getSize())
           }
-          originSize = parent.prop('originSize')
+          originSize = currentParent.prop('originSize')
 
-          let originPosition = parent.prop('originPosition')
+          let originPosition = currentParent.prop('originPosition')
           if (originPosition == null) {
-            parent.prop('originPosition', parent.getPosition())
+            currentParent.prop('originPosition', currentParent.getPosition())
           }
-          originPosition = parent.prop('originPosition')
+          originPosition = currentParent.prop('originPosition')
 
           let x = originPosition.x
           let y = originPosition.y
@@ -235,10 +325,10 @@ export default {
           let cornerY = originPosition.y + originSize.height
           let hasChange = false
 
-          const children = parent.getChildren()
+          const children = currentParent.getChildren()
           if (children) {
             children.forEach((child) => {
-              const bbox = child.getBBox().inflate(30);
+              const bbox = child.getBBox().inflate(10)
               const corner = bbox.getCorner()
 
               if (bbox.x < x) {
@@ -265,68 +355,89 @@ export default {
 
 
           if (hasChange) {
-            parent.prop(
+            currentParent.prop(
                 {
-                  position: {x, y},
-                  size: {width: cornerX - x, height: cornerY - y},
+                  position: { x, y },
+                  size: { width: cornerX - x, height: cornerY - y },
                 },
-                // Note that we also pass a flag so that we know we shouldn't
+                // Note that we also pass a flag so that we know we shouldn't 
                 // adjust the `originPosition` and `originSize` in our handlers.
-                {skipParentHandler: true},
+                { skipParentHandler: true },
             )
           }
         }
       })
 
-      // 控制连接桩显示/隐藏
-      const showPorts = (ports: NodeListOf<SVGElement>, show: boolean) => {
-        for (let i = 0, len = ports.length; i < len; i = i + 1) {
-          ports[i].style.visibility = show ? 'visible' : 'hidden'
+      graph.on('node:added', ({ node }) => {
+        if(node["component" as keyof typeof node]==="switchNode"){
+          const { x, y } = node.position();
+          const bbox = node.getBBox();
+          let child = graph.createNode({
+            x:x+20,
+            y:y+40,
+            width: bbox.width-40,
+            height: bbox.height/3,
+            data:{
+              parent:true
+            },
+            attrs: {
+              body: {
+                strokeWidth: 1,
+                stroke: '#5F95FF',
+                fill: '#E2F4FF',
+              },
+              text: {
+                fontSize: 12,
+                fill: '#262626',
+              },
+            },
+          });
+          node.addChild(child)
+          let nchild = child.clone();
+          nchild.prop({
+            x:x+20,
+            y:y+40+bbox.height/3+10,
+            width: bbox.width-40,
+            height: bbox.height/3,
+          })
+          node.addChild(nchild)
         }
-      }
-      graph.on('node:mouseenter', () => {
-        const container = document.getElementById('container')!
-        const ports = container.querySelectorAll(
-            '.x6-port-body',
-        ) as NodeListOf<SVGElement>
-        showPorts(ports, true)
       })
-      graph.on('node:mouseleave', () => {
-        const container = document.getElementById('container')!
-        const ports = container.querySelectorAll(
-            '.x6-port-body',
-        ) as NodeListOf<SVGElement>
-        showPorts(ports, false)
-      })
-
     }
-    function dropNode(evt: DragEvent) {
-      evt.preventDefault();
-      let label = evt.dataTransfer?.getData("item");
-      let {
-        x,
-        y
-      } = graph.clientToLocal(evt.clientX - Math.floor(nodeConfig.rect.width / 2), evt.clientY - Math.floor(nodeConfig.rect.height / 2))
-      graph.addNode({
-        x,
-        y,
-        ports: {...ports},
-        width: nodeConfig.rect.width,
-        height: nodeConfig.rect.height,
-        shape: 'vue-shape',
-        component: {
-          template: `<myRect label="${label}" />`,
-          components: {
-            myRect,
+    function dropNode(evt: any,component:string,info:any) {
+      let node:Node;
+      //判断节点类型 实现不同类型的节点添加到画布
+      if(component==='switchNode'){
+        node = graph.createNode({
+          ports: {...ports},
+          width: nodeConfig[component as keyof typeof nodeConfig].width*2,
+          height: nodeConfig[component as keyof typeof nodeConfig].height*2,
+          shape: 'vue-shape',
+          component: component,
+          zIndex:-1,
+          data:{
+            parent:true,
+            lock:true,
+            nodeLabel:info,
           }
-        },
-      })
-
+        });
+        dnd.start(node,evt);
+      }else {
+        node = graph.createNode({
+          ports: {...ports},
+          width: nodeConfig[component as keyof typeof nodeConfig].width,
+          height: nodeConfig[component as keyof typeof nodeConfig].height,
+          shape: 'vue-shape',
+          component: component,
+          data:{
+            nodeLabel:info,
+            parent: component==='loopNode'
+          }
+        });
+        dnd.start(node,evt)
+      }
     }
 
-    function allowDrop(ev: DragEvent) {
-      ev.preventDefault();
-    }
 
     function getConfig() {
       jsonInfo.value = JSON.stringify(graph.toJSON()) as string;
@@ -352,9 +463,12 @@ export default {
           position: {x, y},
           size: {width, height},
           ports: {...ports},
+          data:{
+            parent:true
+          },
           attrs: {
             body: {
-              fill: '#fffbe6',
+              fill: 'rgba(35,33,154,.2)',
             },
           },
         });
@@ -368,10 +482,8 @@ export default {
       cusModel,
       jsonInfo,
       dropNode,
-      allowDrop,
       getConfig,
       importJson,
-      addGroup,
       nodeConfig
     }
   },
@@ -398,6 +510,7 @@ export default {
     flex-wrap: wrap;
     gap: 20px 0;
     justify-content: space-around;
+    margin-top: 20px;
   }
 }
 </style>
