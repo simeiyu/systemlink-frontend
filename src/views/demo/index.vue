@@ -41,11 +41,10 @@
 <script lang="ts">
 
 import {Graph, Addon, Rectangle, Shape, Dom,Node} from '@antv/x6';
-const {Dnd} = Addon
 import myRect from './myRect.vue';
 import loopNode from './loopNode.vue'
 import switchNode from './switchNode.vue'
-import {Ref, ref, defineComponent, reactive, UnwrapNestedRefs, onMounted} from 'vue'
+import {ref, onMounted} from 'vue'
 import '@antv/x6-vue-shape'
 
 const ports = {
@@ -281,7 +280,7 @@ export default {
               : true
         },
       })
-      graph.on('node:click', ({e, x, y, node, view}) => {
+      graph.on('node:click', ({node}) => {
         console.log(node)
         cusModel.value = node.data as Object;
       })

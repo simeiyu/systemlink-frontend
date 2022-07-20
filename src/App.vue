@@ -8,5 +8,7 @@
 </template>
 
 <style>
+@import "./assets/icon-font/iconfont.css";
+@import "./assets/font/font.css";
 @import url('./assets/common.less');
 </style>

@@ -1,0 +1,58 @@
+{
+  "id": "3534732",
+  "name": "systemlink",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "30727831",
+      "name": "联合 292",
+      "font_class": "a-lianhe292",
+      "unicode": "e7af",
+      "unicode_decimal": 59311
+    },
+    {
+      "icon_id": "30727783",
+      "name": "组 10154",
+      "font_class": "a-zu10154",
+      "unicode": "e7ac",
+      "unicode_decimal": 59308
+    },
+    {
+      "icon_id": "30727784",
+      "name": "组 10157",
+      "font_class": "a-zu10157",
+      "unicode": "e7ad",
+      "unicode_decimal": 59309
+    },
+    {
+      "icon_id": "30727785",
+      "name": "组 10156",
+      "font_class": "a-zu10156",
+      "unicode": "e7ae",
+      "unicode_decimal": 59310
+    },
+    {
+      "icon_id": "30726727",
+      "name": "联合 290",
+      "font_class": "a-lianhe290",
+      "unicode": "e7ab",
+      "unicode_decimal": 59307
+    },
+    {
+      "icon_id": "30726043",
+      "name": "组 10160",
+      "font_class": "a-zu10160",
+      "unicode": "e7a9",
+      "unicode_decimal": 59305
+    },
+    {
+      "icon_id": "30726044",
+      "name": "组 10161",
+      "font_class": "a-zu10161",
+      "unicode": "e7aa",
+      "unicode_decimal": 59306
+    }
+  ]
+}
