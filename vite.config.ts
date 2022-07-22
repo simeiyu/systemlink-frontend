@@ -45,8 +45,8 @@ export default defineConfig({
         proxy: {
             // 选项写法
             "/systemlink": {
-                // target: "http://10.88.36.131:8080/",
-                target: " http://192.168.10.65:8080/",
+                target: "http://10.88.36.131:8080/",
+                // target: " http://192.168.10.65:8080/",
                 changeOrigin: true,
                 // rewrite: (path) => path.replace(/^\/api/, ""),
             },

@@ -49,7 +49,7 @@
           </div>
 
         </el-tab-pane>
-        <el-tab-pane label="设置项" name="设置项">Config</el-tab-pane>
+        <el-tab-pane label="设置项" name="设置项">{{ panelData }}</el-tab-pane>
       </el-tabs>
     </div>
   </div>
@@ -191,7 +191,7 @@ function initEditor() {
   })
   graph.on('node:click', ({node}) => {
     console.log(node)
-    panelData.value = node.data as Object;
+    panelData.value = node.data.nodeData.metaInfo as Object;
   })
   // 控制连接桩显示/隐藏
   const showPorts = (ports: NodeListOf<SVGElement>, show: boolean) => {
