@@ -5,8 +5,7 @@
       :required="fieldData.required"
       :tableConfig="fieldData.table"
       :type="fieldData.form"
-      :value="value"
-      @change="change"
+      v-model="fieldValue"
       :placeholder="fieldData.title">
     <el-option
         v-if="type==='el-select'"
@@ -31,11 +30,6 @@ const props = defineProps({
     default: () => {
     }
   },
-  value: {
-    type: String, //(string也可以是其他你自定义的接口)
-    required: false,
-    default: ''
-  },
 });
 const fieldMap = {
   select: 'el-select',
@@ -46,9 +40,9 @@ const fieldMap = {
 }
 //定义select的选项
 let options = [], tableData = [];
+let fieldValue = ref('')
 let type = ref('');
 const fieldData = readonly(props.nodeData);
-
 //装载选项数据
 function loadOptionData() {
   let url = fieldData.vauleUrl;

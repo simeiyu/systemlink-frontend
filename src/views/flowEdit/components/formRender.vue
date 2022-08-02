@@ -27,7 +27,7 @@
           </el-button>
           <template v-if="field.extend&&field.extend[properties[field.name]]&&field.extend[properties[field.name]].position==='default'">
             <div class="opt" v-for="iField in field.extend[properties[field.name]].content">
-              <field-factory :node-data="iField" v-model="properties[iField.name]" :key="iField.name"></field-factory>
+              <field-factory :node-data="iField" :key="iField.name"></field-factory>
             </div>
           </template>
         </template>
@@ -38,11 +38,17 @@
   <el-dialog title="设置" v-model="dialogFormVisible" destroy-on-close>
     <div class="dia-form">
       <div class="form-line" v-for="field in diagFormConfig.content">
-        <field-factory :node-data="field" v-model="properties[field.name]"></field-factory>
-        <field-factory
-            v-if="properties[field.name]"
-            v-for="subField in field.extend[properties[field.name]].content" :key="subField.name"
-            :node-data="subField" v-model="properties[subField.name]"></field-factory>
+        <field-factory :node-data="field" ></field-factory>
+        {{field.extend}}
+        <template
+            :key="subField.name"
+            v-for="subField in field.extend[properties[field.name]].content"
+            v-if="properties[field.name]">
+
+          <field-factory
+              :node-data="subField">
+          </field-factory>
+        </template>
       </div>
     </div>
     <template #footer>

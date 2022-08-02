@@ -8,7 +8,7 @@
           v-for="row in tableConfig"
           :prop="row.name" :label="row.title">
         <template #default="scope">
-          <el-input size="default" :placeholder="row.title"></el-input>
+          <el-input size="default" v-model="scope.row[row.name]" :placeholder="row.title"></el-input>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="100">
@@ -37,11 +37,13 @@ let row = {};
 tableConfig.forEach((item:any) => {
     row[item.name] = '';
 });
+let newRow = Object.assign({},row);
 let tableData = ref([row]);
 function addLine() {
-  tableData.value.push(Object.assign({},row));
+  tableData.value.push(Object.assign({},newRow));
 }
 function deleteLine(index,val) {
+  console.log(val)
   tableData.value.splice(index,1);
 }
 
