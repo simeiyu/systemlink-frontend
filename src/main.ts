@@ -1,4 +1,4 @@
-import { createApp} from "vue"
+import { createApp } from "vue"
 import ElementPlus from 'element-plus'
 import App from './App.vue'
 import router from './route/index'
@@ -9,5 +9,5 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
 app.use(router)
-app.use(ElementPlus, { size: 'default', zIndex: 3000 })
+app.use(ElementPlus)
 app.mount('#app')

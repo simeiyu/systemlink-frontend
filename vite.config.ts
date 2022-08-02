@@ -1,5 +1,5 @@
 import {defineConfig} from "vite";
-
+import { viteCommonjs } from '@originjs/vite-plugin-commonjs'
 // @ts-ignore
 import {name} from "./package.json";
 // 按需加载必备插件
@@ -74,6 +74,7 @@ export default defineConfig({
     },
     plugins: [
         vue(),
+        viteCommonjs(),
         autoZip(),
     ],
 });

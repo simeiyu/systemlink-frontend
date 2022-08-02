@@ -1,10 +1,10 @@
 <template>
   <component
       :is="type"
+      show-time
       :multiple="fieldData.multiple"
       :required="fieldData.required"
       :tableConfig="fieldData.table"
-      :type="fieldData.form"
       v-model="fieldValue"
       :placeholder="fieldData.title">
     <el-option
@@ -18,6 +18,8 @@
 </template>
 
 <script lang="ts" setup>
+import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
+import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
 import {request} from "@/plugin/axios";
 import {readonly, ref, defineEmits, watch,shallowRef,markRaw} from "vue";
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
@@ -35,7 +37,7 @@ const fieldMap = {
   select: 'el-select',
   input: 'el-input',
   table: markRaw(EditTable),
-  datetime:'el-date-picker',
+  datetime:markRaw(DatePicker),
   "textArea":'textarea'
 }
 //定义select的选项
