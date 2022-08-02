@@ -1,7 +1,7 @@
 import { createRouter,createWebHashHistory} from "vue-router";
 import demo from "../views/demo/index.vue";
 import demo2 from "../views/demo/demo2.vue"
-import flowEdit from "/@/views/flowEdit/index.vue";
+import flowEdit from "../views/flowEdit/index.vue";
 
 const routes = [
     {

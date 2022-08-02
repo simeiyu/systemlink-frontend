@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { showMessage } from "./status";   // 引入状态码文件
 import { ElMessage } from 'element-plus'  // 引入el 提示框，这个项目里用什么组件库这里引什么
-import config from "/@/config/config";
+import config from "@/config/config";
 
 // 设置接口超时时间
 axios.defaults.timeout = 60000;

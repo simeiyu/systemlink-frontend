@@ -7,8 +7,8 @@
  <router-view/>
 </template>
 
-<style>
+<style lang="less">
 @import "./assets/icon-font/iconfont.css";
-@import "./assets/font/font.css";
+@import "./assets/font/font.less";
 @import url('./assets/common.less');
 </style>

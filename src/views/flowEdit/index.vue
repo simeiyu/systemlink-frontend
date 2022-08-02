@@ -49,19 +49,22 @@
           </div>
 
         </el-tab-pane>
-        <el-tab-pane label="设置项" name="设置项">{{ panelData }}</el-tab-pane>
+        <el-tab-pane label="设置项" name="设置项">
+          <form-render :formConfig="panelData" v-if="panelData"></form-render>
+        </el-tab-pane>
       </el-tabs>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import ports from "/@/views/flowEdit/ports";
-import rectNode from "/@/components/nodes/rectNode.vue";
-import {onMounted, ref} from "vue";
+import ports from "@/views/flowEdit/ports";
+import rectNode from "@/components/nodes/rectNode.vue";
+import {onMounted, ref,createVNode} from "vue";
 import {Graph, Addon, Rectangle, Shape, Dom,Node} from '@antv/x6';
-import {NodeGroup} from "/@/api/api";
-import myRect from "/@/views/demo/myRect.vue";
+import {NodeGroup} from "@/api/api";
+import formRender from './components/formRender.vue'
+import FormRender from "@/views/flowEdit/components/formRender.vue";
 let dnd:Addon.Dnd;
 let graph: Graph;
 const activeName = ref('组件栏');
@@ -74,11 +77,11 @@ function initEditor() {
   Graph.registerVueComponent(
       "rectNode",
       {
-        template: `<rectNode :onMap="true"/>`,
-        components: {
-          rectNode,
-        },
-      },
+        //只能使用render方式保证打包之后展示正常
+        render(){
+          return createVNode(rectNode,{onMap:true});
+        }
+      }as any,
       true
   );
   graph = new Graph({
@@ -190,8 +193,8 @@ function initEditor() {
     },
   })
   graph.on('node:click', ({node}) => {
-    console.log(node)
-    panelData.value = node.data.nodeData.metaInfo as Object;
+    panelData.value = JSON.parse(node.data.nodeData.metaInfo);
+    activeName.value = '设置项';
   })
   // 控制连接桩显示/隐藏
   const showPorts = (ports: NodeListOf<SVGElement>, show: boolean) => {
@@ -275,7 +278,6 @@ function initEditor() {
       }
     }
   })
-
   graph.on('node:added', ({ node }) => {
     if(node["component" as keyof typeof node]==="switchNode"){
       const { x, y } = node.position();
@@ -316,7 +318,6 @@ function initEditor() {
 function initData() {
   NodeGroup.getGroupList({}).then((res: any) => {
     nodeGroup.value = res.data;
-    console.log(res)
   })
 }
 function dropNode(evt: any,nodeData:any) {
@@ -452,8 +453,9 @@ onMounted(() => {
         user-select: none;
         transition: all .3s;
         height: 0;
-        overflow: hidden;
+        overflow: auto;
         display: flex;
+        flex-wrap: wrap;
         gap: 8px;
         font-size: 14px;
         font-weight: 400;
@@ -465,8 +467,8 @@ onMounted(() => {
           transform: rotate(90deg);
         }
         .item-box{
-          padding: 18px;
-          height: 100px;
+          height: auto;
+          padding: 16px;
         }
       }
     }
