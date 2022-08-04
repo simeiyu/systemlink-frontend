@@ -25,7 +25,7 @@ export default {
     onMap: false
   },
   setup(props) {
-    let mapLabel = ref('123'),
+    let mapLabel = ref(''),
         mapIcon = ref('');
     onMounted(() => {
       if (props.onMap) {

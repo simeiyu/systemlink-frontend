@@ -60,12 +60,14 @@
 <script lang="ts" setup>
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
-import {onMounted, ref,createVNode} from "vue";
-import {Graph, Addon, Rectangle, Shape, Dom,Node} from '@antv/x6';
+import choiceNode from "@/components/nodes/choiceNode.vue"
+import {onMounted, ref, createVNode} from "vue";
+import {Graph, Addon, Rectangle, Shape, Dom, Node} from '@antv/x6';
 import {NodeGroup} from "@/api/api";
 import formRender from './components/formRender.vue'
 import FormRender from "@/views/flowEdit/components/formRender.vue";
-let dnd:Addon.Dnd;
+
+let dnd: Addon.Dnd;
 let graph: Graph;
 const activeName = ref('组件栏');
 let curActive = ref(0);
@@ -78,10 +80,20 @@ function initEditor() {
       "rectNode",
       {
         //只能使用render方式保证打包之后展示正常
-        render(){
-          return createVNode(rectNode,{onMap:true});
+        render() {
+          return createVNode(rectNode, {onMap: true});
         }
-      }as any,
+      } as any,
+      true
+  );
+  Graph.registerVueComponent(
+      "choiceNode",
+      {
+        //只能使用render方式保证打包之后展示正常
+        render() {
+          return createVNode(choiceNode);
+        }
+      } as any,
       true
   );
   graph = new Graph({
@@ -157,19 +169,19 @@ function initEditor() {
     },
     embedding: {
       enabled: true,
-      findParent({node}) {
-        const bbox = node.getBBox()
-        return this.getNodes().filter((node) => {
-          // 只有 data.parent 为 true 的节点才是父节点
-          const data = node.getData<any>()
-          if (data && data.parent) {
-            const targetBBox = node.getBBox()
-            if (node.zIndex) node.zIndex -= 1;
-            return bbox.isIntersectWithRect(targetBBox)
-          }
-          return false
-        })
-      }
+      // findParent({node}) {
+      //   const bbox = node.getBBox()
+      //   return this.getNodes().filter((node) => {
+      //     // 只有 data.parent 为 true 的节点才是父节点
+      //     const data = node.getData<any>()
+      //     if (data && data.parent) {
+      //       const targetBBox = node.getBBox()
+      //       if (node.zIndex) node.zIndex -= 1;
+      //       return bbox.isIntersectWithRect(targetBBox)
+      //     }
+      //     return false
+      //   })
+      // }
     },
     snapline: true,
   });
@@ -177,10 +189,10 @@ function initEditor() {
     target: graph,
     scaled: false,
     animation: true,
-    validateNode(droppingNode:any, options:any) {
+    validateNode(droppingNode: any, options: any) {
       return droppingNode.shape === 'html'
           ? new Promise<boolean>((resolve) => {
-            const { draggingNode, draggingGraph } = options
+            const {draggingNode, draggingGraph} = options
             const view = draggingGraph.findView(draggingNode)
             const contentElem = view.findOne('foreignObject > body > div')
             Dom.addClass(contentElem, 'validating')
@@ -216,7 +228,7 @@ function initEditor() {
     ) as NodeListOf<SVGElement>
     showPorts(ports, false)
   })
-  graph.on('node:embedded', ({ node, currentParent }) => {
+  graph.on('node:embedded', ({node, currentParent}) => {
     if (currentParent && currentParent.isNode()) {
       let originSize = currentParent.prop('originSize')
       if (originSize == null) {
@@ -268,49 +280,47 @@ function initEditor() {
       if (hasChange) {
         currentParent.prop(
             {
-              position: { x, y },
-              size: { width: cornerX - x, height: cornerY - y },
+              position: {x, y},
+              // size: {width: cornerX - x, height: cornerY - y},
             },
             // Note that we also pass a flag so that we know we shouldn't
             // adjust the `originPosition` and `originSize` in our handlers.
-            { skipParentHandler: true },
+            {skipParentHandler: true},
         )
       }
     }
   })
-  graph.on('node:added', ({ node }) => {
-    if(node["component" as keyof typeof node]==="switchNode"){
-      const { x, y } = node.position();
+  graph.on('node:added', ({node}) => {
+    if (node["component" as keyof typeof node] === "choiceNode") {
+      const {x, y} = node.position();
       const bbox = node.getBBox();
-      let child = graph.createNode({
-        x:x+20,
-        y:y+40,
-        width: bbox.width-40,
-        height: bbox.height/3,
-        data:{
-          parent:true
-        },
-        attrs: {
-          body: {
-            strokeWidth: 1,
-            stroke: '#5F95FF',
-            fill: '#E2F4FF',
+      //元数据解析
+      let choiceData = JSON.parse(node.data.nodeData.metaInfo);
+      choiceData.branches.forEach((branch,index)=>{
+        let child = graph.createNode({
+          x: x + 20,
+          y: y + 122*(index+1),
+          width: bbox.width - 40,
+          zIndex:1,
+          height: 122,
+          data: {
+            parent: true,
+            nodeData:branch
           },
-          text: {
-            fontSize: 12,
-            fill: '#262626',
+          attrs: {
+            body: {
+              strokeWidth: 1,
+              stroke: '#5F95FF',
+              fill: '#E2F4FF',
+            },
+            text: {
+              fontSize: 12,
+              fill: '#262626',
+            },
           },
-        },
-      });
-      node.addChild(child)
-      let nchild = child.clone();
-      nchild.prop({
-        x:x+20,
-        y:y+40+bbox.height/3+10,
-        width: bbox.width-40,
-        height: bbox.height/3,
+        });
+        node.addChild(child)
       })
-      node.addChild(nchild)
     }
   })
 }
@@ -320,22 +330,44 @@ function initData() {
     nodeGroup.value = res.data;
   })
 }
-function dropNode(evt: any,nodeData:any) {
-  let node:Node;
+
+function dropNode(evt: any, nodeData: any) {
+  let node: Node | undefined;
   //判断节点类型 实现不同类型的节点添加到画布
-  node = graph.createNode({
-    ports: {...ports},
-    width: 90,
-    height: 90,
-    shape: 'vue-shape',
-    component: 'rectNode',
-    zIndex:-1,
-    data:{
-      nodeData
-    }
-  });
-  dnd.start(node,evt);
+  switch (nodeData.name) {
+    case 'loop' :
+      break;
+    case 'choice':
+      node = graph.createNode({
+        ports: {...ports},
+        shape: 'vue-shape',
+        width: 644,
+        height: 486,
+        component: 'choiceNode',
+        zIndex: -1,
+        data: {
+          nodeData
+        }
+      });
+      break;
+    default:
+      node = graph.createNode({
+        ports: {...ports},
+        width: 90,
+        height: 90,
+        shape: 'vue-shape',
+        component: 'rectNode',
+        zIndex: 1,
+        data: {
+          nodeData
+        }
+      });
+  }
+  if (node) {
+    dnd.start(node, evt)
+  }
 }
+
 onMounted(() => {
   initEditor()
   initData()
@@ -407,7 +439,7 @@ onMounted(() => {
       width: auto !important;
       margin: 24px;
       background: #fff;
-      box-shadow: 2px 2px 3px 0 rgba(0,0,0,0.3000), -7px -7px 3px 0px rgba(234,247,255,0.2000);
+      box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, 0.3000), -7px -7px 3px 0px rgba(234, 247, 255, 0.2000);
     }
 
     .flow-bottom {
@@ -434,7 +466,7 @@ onMounted(() => {
       padding-left: 16px;
     }
 
-    .nodeGroup{
+    .nodeGroup {
       .item-block {
         height: 40px;
         background: #FAFAFB;
@@ -449,7 +481,8 @@ onMounted(() => {
         padding-left: 16px;
         cursor: pointer;
       }
-      .item-box{
+
+      .item-box {
         user-select: none;
         transition: all .3s;
         height: 0;
@@ -461,12 +494,14 @@ onMounted(() => {
         font-weight: 400;
         color: #4C5A67;
       }
+
       &.active {
         .arrow-icon {
           transition: all .3s;
           transform: rotate(90deg);
         }
-        .item-box{
+
+        .item-box {
           height: auto;
           padding: 16px;
         }

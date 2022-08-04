@@ -25,7 +25,8 @@
                      @click="getExtendData(field.extend[properties[field.name]])">
             详细设置
           </el-button>
-          <template v-if="field.extend&&field.extend[properties[field.name]]&&field.extend[properties[field.name]].position==='default'">
+          <template
+              v-if="field.extend&&field.extend[properties[field.name]]&&field.extend[properties[field.name]].position==='default'">
             <div class="opt" v-for="iField in field.extend[properties[field.name]].content">
               <field-factory :node-data="iField" :key="iField.name"></field-factory>
             </div>
@@ -38,17 +39,13 @@
   <el-dialog title="设置" v-model="dialogFormVisible" destroy-on-close>
     <div class="dia-form">
       <div class="form-line" v-for="field in diagFormConfig.content">
-        <field-factory :node-data="field" ></field-factory>
-        {{field.extend}}
-        <template
+        <field-factory :node-data="field" v-model="properties[field.name]"></field-factory>
+        <field-factory
             :key="subField.name"
             v-for="subField in field.extend[properties[field.name]].content"
-            v-if="properties[field.name]">
-
-          <field-factory
-              :node-data="subField">
-          </field-factory>
-        </template>
+            v-if="properties[field.name]&&field.extend"
+            :node-data="subField">
+        </field-factory>
       </div>
     </div>
     <template #footer>
@@ -118,7 +115,8 @@ function getExtendData(modelData) {
         margin-top: 20px;
         margin-left: 10px;
       }
-      .opt{
+
+      .opt {
         margin: 10px;
         width: 215px;
       }
@@ -127,9 +125,15 @@ function getExtendData(modelData) {
 }
 
 .dia-form {
+  * {
+    user-select: none !important;
+
+  }
+
   .form-line {
-    margin:0 20px;
-    div{
+    margin: 0 20px;
+
+    div {
       margin: 0 5px;
     }
   }
