@@ -7,33 +7,44 @@
           决策分支
         </div>
       </div>
-      <a class="btn-toggle" @click.stop="onToggle">{{icon}}</a>
+      <a class="btn-toggle" @click.stop="onToggle">
+        <i v-if="collapsed" class="iconfont icon-down"></i>
+        <i v-else class="iconfont icon-up"></i>
+      </a>
     </div>
-    <div class="footer">
-      <a class="btn-add" @click.stop="onAddBranch">+</a>
+    <div class="footer" v-if="!collapsed">
+      <a class="btn-add" @click.stop="onAddBranch"><i class="iconfont icon-plus"></i></a>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, computed } from "vue-demi";
+import { inject, ref, reactive } from "vue-demi";
 import branch from "@/utils/choice/branch";
 
 let collapsed = ref(false);
-let icon = computed(() => collapsed.value ? '↓' : '↑');
+let expandSize = reactive({width: 644, height: 486});
 const getNode = inject("getNode");
 const getGraph = inject("getGraph");
 const node = getNode();
 const graph = getGraph();
 function onToggle () {
   collapsed.value = !collapsed.value;
+  let toggleFunc;
   if (collapsed.value) {
-    node.getChildren().forEach(item => item.hide());
+    expandSize = node.getSize();
     node.resize(120, 90);
+    toggleFunc = 'hide';
   } else {
-    node.getChildren().forEach(item => item.show());
-    node.resize(644, 486);
+    node.resize(expandSize.width, expandSize.height);
+    toggleFunc = 'show';
   }
+  node.getChildren().forEach(item => {
+    item[toggleFunc]();
+    if (item.getChildCount()) {
+      item.children.forEach(child => child[toggleFunc]())
+    }
+  });
 }
 function onAddBranch () {
   const index = node.getChildren().length;  
@@ -54,7 +65,7 @@ function onAddBranch () {
   box-sizing: border-box;
   margin-bottom: 5px;
   gap:5px;
-  padding: 16px;
+  padding: 8px 0 0 16px;
   font-size: 14px;
   font-weight: 400;
   color: #4C5A67;
@@ -65,6 +76,7 @@ function onAddBranch () {
   .icon {
     width: 60px;
     text-align: center;
+    margin-right: 8px;
     .tip{
       font-size: 14px;
       color: #4C5A67;
