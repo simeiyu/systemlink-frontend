@@ -70,6 +70,7 @@
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
 import choiceNode from "@/components/nodes/choiceNode.vue"
+import loopNode from "@/components/nodes/loopNode.vue"
 import { onMounted, ref, createVNode } from "vue";
 import {Graph, Addon, Rectangle, Shape, Dom, Node} from '@antv/x6';
 import {NodeGroup} from "@/api/api";
@@ -112,6 +113,16 @@ function initEditor() {
         //只能使用render方式保证打包之后展示正常
         render() {
           return createVNode(choiceNode);
+        }
+      } as any,
+      true
+  );
+  Graph.registerVueComponent(
+      "loopNode",
+      {
+        //只能使用render方式保证打包之后展示正常
+        render() {
+          return createVNode(loopNode);
         }
       } as any,
       true
@@ -372,7 +383,20 @@ function dropNode(evt: any, nodeData: any) {
   let node: Node | undefined;
   //判断节点类型 实现不同类型的节点添加到画布
   switch (nodeData.name) {
-    case 'loop' :
+    case 'loop':
+      node = graph.createNode({
+        ports: {...ports},
+        shape: 'vue-shape',
+        width: 500,
+        height: 320,
+        component: 'loopNode',
+        zIndex: -1,
+        data: {
+          kind: nodeData.name,
+          properties: {},
+          nodeData,
+        }
+      });
       break;
     case 'choice':
       node = graph.createNode({

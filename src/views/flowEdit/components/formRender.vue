@@ -79,7 +79,8 @@ let emits = defineEmits(['update:modelValue']);
 
 function updateProperties({name, value}) {
   properties[name] = value;
-  console.log('--- update: ', properties, name, value)
+  console.log('--- formConfig: ', formConfig)
+  console.log('--- update: ', properties)
   emits('update:modelValue', properties)
 }
 function updateDialogForm({name, value}) {
@@ -95,12 +96,17 @@ function updateDialogForm({name, value}) {
 //设置弹窗内容
 function getExtendData(modelData) {
   console.log('--- modelData: ', modelData);
-  dialogFormConfig.value = modelData.content;
   dialogFormVisible.value = true;
   dialogForm = {};
-  modelData.content.forEach(item => {
-    dialogForm[item.name] = props.modelValue[item.name] || '';
-  })
+  if (modelData.content) {
+    dialogFormConfig.value = modelData.content
+    modelData.content.forEach(item => {
+      dialogForm[item.name] = props.modelValue[item.name] || '';
+    })
+  } else {
+    dialogFormConfig.value = [modelData];
+    dialogForm[modelData.name] = props.modelValue[modelData.name] || '';
+  }
 }
 
 // getProperties();

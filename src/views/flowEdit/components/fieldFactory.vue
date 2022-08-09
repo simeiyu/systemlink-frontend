@@ -84,7 +84,7 @@ checkData();
 
 function change(val) {
   console.log('---change: ', val)
-  emit('input', {name: [fieldData.name], value: val})
+  emit('input', {name: fieldData.name, value: val})
 }
 
 watch(() => props.nodeData, (newValue, oldValue) => {
