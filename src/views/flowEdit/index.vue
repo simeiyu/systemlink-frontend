@@ -191,6 +191,26 @@ function initEditor() {
       enabled: true,
       rubberband: true,
       showNodeSelectionBox: true,
+      // choice组件在画布中不选中
+      filter(node) {
+        return !node.component || node.component !== 'choiceNode';
+      },
+      // 有节点被选中，其他事件依然响应
+      pointerEvents: 'none',
+    },
+    translating: {
+      // 将子节点的移动范围限制在父节点内
+      restrict(view) {
+        const cell = view.cell
+        if (cell.isNode()) {
+          const parent = cell.getParent()
+          if (parent) {
+            return parent.getBBox()
+          }
+        }
+
+        return null
+      },
     },
     embedding: {
       enabled: true,
@@ -241,8 +261,6 @@ function initEditor() {
       metaInfo: metaInfo,
       properties: node.data.properties
     }
-    console.log('---click: ', activeNode.value.properties)
-    // properties.value = node.data.properties;
     activeName.value = '设置项';
   })
   // 控制连接桩显示/隐藏
@@ -331,7 +349,6 @@ function initEditor() {
       //元数据解析
       let choiceData = JSON.parse(node.data.nodeData.metaInfo);
       choiceData.branches.forEach((item, index)=>{
-        console.log('--- branch: ', item)
         if (item.processorType === 'when') {
           branch.create(graph, node, index, item);
         }
@@ -379,7 +396,7 @@ function dropNode(evt: any, nodeData: any) {
         height: 90,
         shape: 'vue-shape',
         component: 'rectNode',
-        zIndex: 1,
+        zIndex: 2,
         data: {
           kind: nodeData.name,
           properties: {},
