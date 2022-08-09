@@ -7,6 +7,7 @@
       :tableConfig="fieldData.table"
       @change="change"
       v-model="fieldValue"
+      :value-format="dateFormat"
       :placeholder="fieldData.title">
     <el-option
         v-if="type==='el-select'"
@@ -23,7 +24,6 @@ import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
 import {request} from "@/plugin/axios";
 import {readonly, ref, defineEmits, watch, shallowRef, markRaw} from "vue";
-import dayjs from "dayjs";
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
 
 const emit = defineEmits(['input'])
@@ -34,7 +34,11 @@ const props = defineProps({
     default: () => {
     }
   },
-  modelValue: String
+  modelValue: {
+    type: String, 
+    required: true,
+    default: () => ''
+  }
 });
 const fieldMap = {
   select: 'el-select',
@@ -43,10 +47,11 @@ const fieldMap = {
   datetime:markRaw(DatePicker),
   "textArea":'textarea'
 }
+const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
 let options = [], tableData = [];
-let fieldValue = ref()
 let type = ref('');
+let fieldValue = ref('');
 const fieldData = readonly(props.nodeData);
 //装载选项数据
 function loadOptionData() {
@@ -63,12 +68,8 @@ function loadTableData() {
 //检查需要的类型
 function checkData() {
   type.value = fieldMap[fieldData.form];
-  if (fieldData.form === 'datetime') {
-    fieldValue.value = dayjs(props.modelValue);
-  } else {
-    fieldValue.value = props.modelValue;
-  }
-  console.log('--->', fieldValue.value)
+  fieldValue.value = props.modelValue;
+  console.log('--- field: ', fieldData.name, props.modelValue)
   switch (fieldData.form) {
     case 'select':
       loadOptionData();
@@ -82,11 +83,8 @@ function checkData() {
 checkData();
 
 function change(val) {
-  if (fieldData.form === 'datetime') {
-    val = val.format('YYYY-MM-DD HH:mm:ss')
-  }
-  console.log('--- val：', val, fieldData.name)
-  emit('input', {[fieldData.name]: val})
+  console.log('---change: ', val)
+  emit('input', {name: [fieldData.name], value: val})
 }
 
 watch(() => props.nodeData, (newValue, oldValue) => {

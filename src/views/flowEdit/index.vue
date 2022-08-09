@@ -60,7 +60,7 @@
         </el-tab-pane>
         <el-tab-pane label="设置项" name="设置项">
           <button @click="showConsole">console</button>
-          <form-render :formConfig="panelData" v-if="panelData" v-model="properties"></form-render>
+          <form-render :formConfig="activeNode.metaInfo" v-if="activeNode" v-model="activeNode.properties"></form-render>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -82,12 +82,16 @@ let graph: Graph;
 const activeName = ref('组件栏');
 let curActive = ref(0);
 let nodeGroup = ref();
-let panelData = ref();
-let properties = ref();
+let activeNode = ref();
+// let panelData = ref();
+// let properties = ref();
 let loading = ref(false);
 
 function showConsole() {
-  console.log('---- properties: ', properties.value)
+  console.log('---- properties: ', activeNode.value.id, activeNode.value)
+  const node = graph.getCellById(activeNode.value.id);
+  console.log('--- node: ', node)
+  node.data.properties = activeNode.value.properties;
 }
 
 function initEditor() {
@@ -224,12 +228,19 @@ function initEditor() {
     },
   })
   graph.on('node:click', ({node}) => {
+    let metaInfo;
     if (typeof node.data.nodeData.metaInfo === 'string') {
-      panelData.value = JSON.parse(node.data.nodeData.metaInfo);
+      metaInfo = JSON.parse(node.data.nodeData.metaInfo);
     } else {
-      panelData.value = node.data.nodeData.metaInfo
+      metaInfo = node.data.nodeData.metaInfo
     }
-    properties.value = node.data.properties;
+    activeNode.value = {
+      id: node.id,
+      metaInfo: metaInfo,
+      properties: node.data.properties
+    }
+    console.log('---click: ', activeNode.value.properties)
+    // properties.value = node.data.properties;
     activeName.value = '设置项';
   })
   // 控制连接桩显示/隐藏

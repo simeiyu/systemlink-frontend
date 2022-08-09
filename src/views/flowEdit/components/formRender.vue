@@ -62,7 +62,7 @@
 
 <script lang="ts" setup>
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
-import { readonly, ref, defineProps, defineEmits } from "vue";
+import { readonly, ref, defineProps, defineEmits, watch, reactive } from "vue";
 
 const props = defineProps({
   formConfig: {
@@ -77,16 +77,17 @@ const props = defineProps({
   }
 })
 const formInfo = readonly(props.formConfig);
-let properties = ref(props.modelValue);
+let properties = reactive({...props.modelValue});
 //弹窗展示
 let dialogForm = ref({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
 let emits = defineEmits(['update:modelValue']);
 
-function updateProperties(param) {
-  properties.value = {...properties.value, ...param}
-  emits('update:modelValue', properties.value)
+function updateProperties({name, value}) {
+  console.log('--- update: ', properties, name, value)
+  properties[name] = value;
+  emits('update:modelValue', properties)
 }
 
 //设置需要输入的参数 用于v-model
@@ -109,9 +110,14 @@ function getExtendData(modelData) {
 function onSubmit() {
   console.log('---- properties: ', properties.value);
   console.log('---- dialogForm: ', dialogForm.value);
-  dialogFormVisible.value = false
-  emits('update:modelValue', Object.assign({}, properties.value, dialogForm.value))
+  dialogFormVisible.value = false;
+  emits('update:modelValue', Object.assign({}, properties.value, dialogForm.value));
 }
+
+watch(() => props.modelValue, (newValue, oldValue) => {
+  properties = newValue;
+  console.log('--- watch: ', properties)
+})
 
 </script>
 
