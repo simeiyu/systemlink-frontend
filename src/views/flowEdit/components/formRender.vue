@@ -36,23 +36,12 @@
     </div>
   </div>
 
-  <el-dialog title="设置" v-model="dialogFormVisible" destroy-on-close>
+  <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close>
     <el-form :model="dialogForm" class="dia-form" label-width="120px">
       <el-form-item v-for="field in dialogFormConfig" :label="field.title">
         <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm"></field-factory>
       </el-form-item>
     </el-form>
-    <!-- <div class="dia-form">
-      <div class="form-line" v-for="field in dialogFormConfig.content">
-        <field-factory :node-data="field" v-model="properties[field.name]"></field-factory>
-        <field-factory
-            :key="subField.name"
-            v-for="subField in field.extend[properties[field.name]].content"
-            v-if="properties[field.name]&&field.extend"
-            :node-data="subField">
-        </field-factory>
-      </div>
-    </div> -->
     <template #footer>
       <el-button @click="dialogFormVisible = false">取 消</el-button>
       <el-button type="primary" @click="onSubmit">确 定</el-button>
