@@ -12,9 +12,9 @@
     </div>
     <div class="right">
       <!-- 撤销 -->
-      <el-button icon="DArrowLeft" plain size="large" circle text/>
-      <!-- 取消撤销 -->
-      <el-button icon="DArrowRight" size="large" circle text/>
+      <el-button icon="DArrowLeft" plain size="large" circle text :disabled="canUndo" @click="onUndo" />
+      <!-- 重做 -->
+      <el-button icon="DArrowRight" size="large" circle text :disabled="canRedo" @click="onRedo" />
       <div class="v-line"></div>
       <!-- 设置 -->
       <el-button icon="Setting" text circle size="large"/>
@@ -59,8 +59,7 @@
           </div>
         </el-tab-pane>
         <el-tab-pane label="设置项" name="设置项">
-          <button @click="showConsole">console</button>
-          <form-render :formConfig="activeNode.metaInfo" v-if="activeNode" v-model="activeNode.properties"></form-render>
+          <form-render :formConfig="activeNode.metaInfo" v-if="activeNode" v-model="activeNode.properties" :nodeId="activeNode.id" @update:modelValue="updateNodeProperties"></form-render>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -86,12 +85,13 @@ let activeNode = ref();
 // let panelData = ref();
 // let properties = ref();
 let loading = ref(false);
+let canRedo = ref(true);
+let canUndo = ref(true);
 
-function showConsole() {
-  console.log('---- properties: ', activeNode.value.id, activeNode.value)
+function updateNodeProperties() {
   const node = graph.getCellById(activeNode.value.id);
-  console.log('--- node: ', node)
-  node.data.properties = activeNode.value.properties;
+  console.log('---- updateNodeProperties: ', node.data.properties)
+  node.data.properties = activeNode.value.properties
 }
 
 function initEditor() {
@@ -127,8 +127,10 @@ function initEditor() {
         thickness: 1,     // 网格线宽度/网格点大小
       },
     },
+    panning: true,  // 画布拖曳
+    history: true,  // 撤销、重做
     autoResize: true,
-    keyboard: {
+    keyboard: {   // 键盘快捷键
       enabled: true,
     },
     mousewheel: {
@@ -329,12 +331,15 @@ function initEditor() {
       //元数据解析
       let choiceData = JSON.parse(node.data.nodeData.metaInfo);
       choiceData.branches.forEach((item, index)=>{
+        console.log('--- branch: ', item)
         if (item.processorType === 'when') {
           branch.create(graph, node, index, item);
         }
       })
     }
   })
+  canRedo.value = graph.history.canRedo();
+  canUndo.value = graph.history.canUndo();
 }
 
 function initData() {
@@ -385,6 +390,13 @@ function dropNode(evt: any, nodeData: any) {
   if (node) {
     dnd.start(node, evt)
   }
+}
+
+function onRedo() {
+  graph.history.redo();
+}
+function onUndo() {
+  graph.history.undo();
 }
 
 onMounted(() => {
