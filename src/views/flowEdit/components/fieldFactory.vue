@@ -5,6 +5,7 @@
       :multiple="fieldData.multiple"
       :required="fieldData.required"
       :tableConfig="fieldData.table"
+      @change="change"
       v-model="fieldValue"
       :placeholder="fieldData.title">
     <el-option
@@ -21,7 +22,8 @@
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
 import {request} from "@/plugin/axios";
-import {readonly, ref, defineEmits, watch,shallowRef,markRaw} from "vue";
+import {readonly, ref, defineEmits, watch, shallowRef, markRaw} from "vue";
+import dayjs from "dayjs";
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
 
 const emit = defineEmits(['input'])
@@ -32,6 +34,7 @@ const props = defineProps({
     default: () => {
     }
   },
+  modelValue: String
 });
 const fieldMap = {
   select: 'el-select',
@@ -42,7 +45,7 @@ const fieldMap = {
 }
 //定义select的选项
 let options = [], tableData = [];
-let fieldValue = ref('')
+let fieldValue = ref()
 let type = ref('');
 const fieldData = readonly(props.nodeData);
 //装载选项数据
@@ -60,6 +63,12 @@ function loadTableData() {
 //检查需要的类型
 function checkData() {
   type.value = fieldMap[fieldData.form];
+  if (fieldData.form === 'datetime') {
+    fieldValue.value = dayjs(props.modelValue);
+  } else {
+    fieldValue.value = props.modelValue;
+  }
+  console.log('--->', fieldValue.value)
   switch (fieldData.form) {
     case 'select':
       loadOptionData();
@@ -73,7 +82,11 @@ function checkData() {
 checkData();
 
 function change(val) {
-  emit('input', val)
+  if (fieldData.form === 'datetime') {
+    val = val.format('YYYY-MM-DD HH:mm:ss')
+  }
+  console.log('--- val：', val, fieldData.name)
+  emit('input', {[fieldData.name]: val})
 }
 
 watch(() => props.nodeData, (newValue, oldValue) => {

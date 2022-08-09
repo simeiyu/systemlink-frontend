@@ -1,0 +1,1772 @@
+[
+  {
+      "name": "触发器组件",
+      "description": "触发器组件",
+      "processorMetaVOList": [
+          {
+              "name": "schedule",
+              "icon": "icon-a-lianhe292",
+              "processorType": "schedule",
+              "metaInfo": {
+                  "title": "周期触发器",
+                  "properties": [
+                      {
+                          "title": "触发器名称",
+                          "name": "tigger_name",
+                          "type": "String",
+                          "form": "input",
+                          "required": true
+                      },
+                      {
+                          "position": "default",
+                          "title": "执行频率",
+                          "name": "type",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [
+                              {
+                                  "name": "单次执行",
+                                  "value": "Once"
+                              },
+                              {
+                                  "name": "周期执行",
+                                  "value": "Repeat"
+                              },
+                              {
+                                  "name": "周期执行（设置开始时间）",
+                                  "value": "RepeatFrom"
+                              },
+                              {
+                                  "name": "周期执行（设置开始时间，结束时间）",
+                                  "value": "RepeatFromTo"
+                              },
+                              {
+                                  "name": "Cron表达式",
+                                  "value": "Cron"
+                              }
+                          ],
+                          "vauleUrl": null,
+                          "extend": {
+                              "Once": {
+                                  "position": "default",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "时间",
+                                          "name": "startTime",
+                                          "type": "String",
+                                          "form": "datetime",
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              "Repeat": {
+                                  "position": "default",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "间隔时长",
+                                          "name": "interval",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "5分钟",
+                                                  "value": "5min"
+                                              },
+                                              {
+                                                  "name": "10分钟",
+                                                  "value": "10min"
+                                              },
+                                              {
+                                                  "name": "1小时",
+                                                  "value": "1hour"
+                                              },
+                                              {
+                                                  "name": "2小时",
+                                                  "value": "2hour"
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              "RepeatFrom": {
+                                  "position": "default",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "开始时间",
+                                          "name": "startTime",
+                                          "type": "String",
+                                          "form": "datetime",
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "间隔时长",
+                                          "name": "interval",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "5分钟",
+                                                  "value": "5min"
+                                              },
+                                              {
+                                                  "name": "10分钟",
+                                                  "value": "10min"
+                                              },
+                                              {
+                                                  "name": "1小时",
+                                                  "value": "1hour"
+                                              },
+                                              {
+                                                  "name": "2小时",
+                                                  "value": "2hour"
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              "RepeatFromTo": {
+                                  "position": "default",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "开始时间",
+                                          "name": "startTime",
+                                          "type": "String",
+                                          "form": "datetime",
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "结束时间",
+                                          "name": "endTime",
+                                          "type": "String",
+                                          "form": "datetime",
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "间隔时长",
+                                          "name": "interval",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "5分钟",
+                                                  "value": "5min"
+                                              },
+                                              {
+                                                  "name": "10分钟",
+                                                  "value": "10min"
+                                              },
+                                              {
+                                                  "name": "1小时",
+                                                  "value": "1hour"
+                                              },
+                                              {
+                                                  "name": "2小时",
+                                                  "value": "2hour"
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              "Cron": {
+                                  "position": "default",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "Cron表达式",
+                                          "name": "cron",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": false
+                                      }
+                                  ]
+                              }
+                          },
+                          "required": true
+                      }
+                  ]
+              },
+              "description": "周期触发",
+              "processorVersion": "v1",
+              "isTrigger": true,
+              "tag": "触发器组件",
+              "output": {
+                  "type": "Object",
+                  "title": "headers",
+                  "expression": "",
+                  "properties": {
+                      "CamelMessageTimestamp": {
+                          "type": "Long",
+                          "title": "消息发送时间戳",
+                          "expression": "{{$id_1.headers.CamelMessageTimestamp}}"
+                      },
+                      "firedTime": {
+                          "type": "Date",
+                          "title": "触发时间",
+                          "expression": "{{$id_1.headers.firedTime}}"
+                      },
+                      "previousFireTime": {
+                          "type": "Date",
+                          "title": "上一次触发时间",
+                          "expression": "{{$id_1.headers.previousFireTime}"
+                      },
+                      "nextFireTime": {
+                          "type": "Date",
+                          "title": "下一次触发时间",
+                          "expression": "{{$id_1.headers.nextFireTime}}"
+                      }
+                  }
+              },
+              "expressionMapper": "{\"processorType\":\"schedule\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\",\"headers\":\"${exchangeProperty.MessageHistoryMap[$id].getHeaders()%s}\"},\"customExpressionMapper\":false}",
+              "isCustomExpressionMapper": "0"
+          },
+          {
+              "name": "kafkaListener",
+              "icon": "icon-a-zu10157",
+              "processorType": "kafkaListener",
+              "metaInfo": {
+                  "title": "kafka监听设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "连接名称",
+                          "name": "resource",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [],
+                          "vauleUrl": "/integration/component/instance/names?type=kafka&appid=(?)",
+                          "required": true
+                      },
+                      {
+                          "position": "default",
+                          "title": "主题",
+                          "name": "topic",
+                          "type": "String",
+                          "form": "input",
+                          "required": true
+                      }
+                  ]
+              },
+              "description": "kafka监听器",
+              "processorVersion": "v1",
+              "isTrigger": true,
+              "tag": "触发器组件",
+              "output": {
+                  "type": "String",
+                  "title": "result",
+                  "expression": "{{$id_1.result}}",
+                  "properties": {}
+              },
+              "expressionMapper": "{\"processorType\":\"kafkaListener\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":false}",
+              "isCustomExpressionMapper": "0"
+          },
+          {
+              "name": "mqttListener",
+              "icon": "icon-a-zu10154",
+              "processorType": "mqttListener",
+              "metaInfo": {
+                  "title": "MQTT监听设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "连接名称",
+                          "name": "resource",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [],
+                          "vauleUrl": "/integration/component/instance/names?type=mqtt&appid=(?)",
+                          "required": true
+                      },
+                      {
+                          "position": "default",
+                          "title": "通用设置",
+                          "name": "general_set",
+                          "type": "String",
+                          "form": "table",
+                          "required": true,
+                          "table": [
+                              {
+                                  "position": "default",
+                                  "title": "主题",
+                                  "name": "topic",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "description": "mqtt监听器",
+              "processorVersion": "v1",
+              "isTrigger": true,
+              "tag": "触发器组件",
+              "output": {
+                  "type": "String",
+                  "title": "result",
+                  "expression": "{{$id_1.result}}",
+                  "properties": {}
+              },
+              "expressionMapper": "{\"processorType\":\"mqttListener\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":false}",
+              "isCustomExpressionMapper": "0"
+          },
+          {
+              "name": "webhook",
+              "icon": null,
+              "processorType": "webhook",
+              "metaInfo": {
+                  "title": "HTTP请求设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "请求路径",
+                          "name": "request_url",
+                          "type": "String",
+                          "form": "input",
+                          "required": true
+                      },
+                      {
+                          "position": "default",
+                          "title": "身份验证",
+                          "name": "authentication",
+                          "type": "List",
+                          "form": "select",
+                          "enum": [
+                              {
+                                  "name": "无",
+                                  "value": "none"
+                              }
+                          ],
+                          "required": true
+                      },
+                      {
+                          "position": "default",
+                          "title": "请求方式",
+                          "name": "request_method",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [
+                              {
+                                  "name": "GET",
+                                  "value": "GET"
+                              },
+                              {
+                                  "name": "POST",
+                                  "value": "POST"
+                              },
+                              {
+                                  "name": "PUT",
+                                  "value": "PUT"
+                              },
+                              {
+                                  "name": "DELETE",
+                                  "value": "DELETE"
+                              }
+                          ],
+                          "required": true,
+                          "extend": {
+                              "GET": {
+                                  "position": "model",
+                                  "title": "数据设置",
+                                  "name": "set_data",
+                                  "type": "List",
+                                  "required": true,
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "请求参数设置",
+                                          "name": "set_param",
+                                          "type": "List",
+                                          "form": "table",
+                                          "required": true,
+                                          "table": [
+                                              {
+                                                  "position": "default",
+                                                  "title": "键",
+                                                  "name": "key",
+                                                  "type": "String",
+                                                  "form": "input",
+                                                  "required": true
+                                              }
+                                          ]
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体类型",
+                                          "name": "body_type",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "raw",
+                                                  "value": "raw"
+                                              }
+                                          ],
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体",
+                                          "name": "body",
+                                          "type": "String",
+                                          "form": "textArea",
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              "POST": {
+                                  "position": "model",
+                                  "title": "数据设置",
+                                  "name": "set_data",
+                                  "type": "List",
+                                  "required": true,
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "请求参数设置",
+                                          "name": "set_param",
+                                          "type": "List",
+                                          "form": "table",
+                                          "required": true,
+                                          "table": [
+                                              {
+                                                  "position": "default",
+                                                  "title": "键",
+                                                  "name": "key",
+                                                  "type": "String",
+                                                  "form": "input",
+                                                  "required": true
+                                              }
+                                          ]
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体类型",
+                                          "name": "body_type",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "raw",
+                                                  "value": "raw"
+                                              }
+                                          ],
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体",
+                                          "name": "body",
+                                          "type": "String",
+                                          "form": "textArea",
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              "PUT": {
+                                  "position": "model",
+                                  "title": "数据设置",
+                                  "name": "set_data",
+                                  "type": "List",
+                                  "required": true,
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "请求参数设置",
+                                          "name": "set_param",
+                                          "type": "List",
+                                          "form": "table",
+                                          "required": true,
+                                          "table": [
+                                              {
+                                                  "position": "default",
+                                                  "title": "键",
+                                                  "name": "key",
+                                                  "type": "String",
+                                                  "form": "input",
+                                                  "required": true
+                                              }
+                                          ]
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体类型",
+                                          "name": "body_type",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "raw",
+                                                  "value": "raw"
+                                              }
+                                          ],
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体",
+                                          "name": "body",
+                                          "type": "String",
+                                          "form": "textArea",
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              "DELETE": {
+                                  "position": "model",
+                                  "title": "数据设置",
+                                  "name": "set_data",
+                                  "type": "List",
+                                  "required": true,
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "请求参数设置",
+                                          "name": "set_param",
+                                          "type": "List",
+                                          "form": "table",
+                                          "required": true,
+                                          "table": [
+                                              {
+                                                  "position": "default",
+                                                  "title": "键",
+                                                  "name": "key",
+                                                  "type": "String",
+                                                  "form": "input",
+                                                  "required": true
+                                              }
+                                          ]
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体类型",
+                                          "name": "body_type",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "raw",
+                                                  "value": "raw"
+                                              }
+                                          ],
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "请求体",
+                                          "name": "body",
+                                          "type": "String",
+                                          "form": "textArea",
+                                          "required": true
+                                      }
+                                  ]
+                              }
+                          }
+                      }
+                  ]
+              },
+              "description": "webhook",
+              "processorVersion": "v1",
+              "isTrigger": true,
+              "tag": "触发器组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"webhook\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          }
+      ]
+  },
+  {
+      "name": "逻辑控制组件",
+      "description": "逻辑控制组件",
+      "processorMetaVOList": [
+          {
+              "name": "mapper",
+              "icon": "icon-a-zu10156",
+              "processorType": "mapper",
+              "metaInfo": {
+                  "title": "",
+                  "properties": [
+                      {
+                          "position": "model",
+                          "title": "映射关系设置",
+                          "name": "set",
+                          "required": true,
+                          "content": [
+                              {
+                                  "position": "default",
+                                  "title": "映射关系设置",
+                                  "name": "mapping_set",
+                                  "required": true,
+                                  "form": "table",
+                                  "table": [
+                                      {
+                                          "position": "default",
+                                          "title": "输出字段",
+                                          "name": "fieldName",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": false
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "值",
+                                          "name": "value",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": false
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "字段类型",
+                                          "name": "fieldType",
+                                          "type": "String",
+                                          "enum": [
+                                              {
+                                                  "name": "字符串",
+                                                  "value": ""
+                                              },
+                                              {
+                                                  "name": "数字",
+                                                  "value": ""
+                                              },
+                                              {
+                                                  "name": "浮点型",
+                                                  "value": ""
+                                              },
+                                              {
+                                                  "name": "日期",
+                                                  "value": ""
+                                              },
+                                              {
+                                                  "name": "JsonObject",
+                                                  "value": ""
+                                              },
+                                              {
+                                                  "name": "JsonArray",
+                                                  "value": ""
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "required": false
+                                      }
+                                  ]
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "description": "处理字段映射",
+              "processorVersion": "v4",
+              "isTrigger": false,
+              "tag": "逻辑控制组件",
+              "output": null,
+              "expressionMapper": "{ \"processorType\":\"mapper\", \"expressionMapper\":{ \"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\" }, \"customExpressionMapper\":true }",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "filter",
+              "icon": "icon-a-zu10161",
+              "processorType": "filter",
+              "metaInfo": {
+                  "title": "数据过滤",
+                  "properties": [
+                      {
+                          "title": "过滤模式",
+                          "name": "model",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [
+                              {
+                                  "name": "简单模式",
+                                  "value": "simple"
+                              },
+                              {
+                                  "name": "表达式模式",
+                                  "value": "expression"
+                              }
+                          ],
+                          "required": true,
+                          "extend": {
+                              "simple": {
+                                  "position": "model",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "输入",
+                                          "name": "input",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": false
+                                      },
+                                      {
+                                          "position": "default",
+                                          "type": "String",
+                                          "title": "匹配模式",
+                                          "name": "match",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "&gt;",
+                                                  "value": "&gt;"
+                                              },
+                                              {
+                                                  "name": "&gt;=",
+                                                  "value": "&gt;="
+                                              },
+                                              {
+                                                  "name": "&lt;",
+                                                  "value": "&lt;"
+                                              },
+                                              {
+                                                  "name": "&lt;=",
+                                                  "value": "&lt;="
+                                              }
+                                          ],
+                                          "required": false
+                                      },
+                                      {
+                                          "position": "default",
+                                          "type": "String",
+                                          "title": "预期值",
+                                          "name": "compare_value",
+                                          "form": "input",
+                                          "required": false
+                                      }
+                                  ]
+                              },
+                              "expression": {
+                                  "position": "model",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "表达式",
+                                          "name": "expression",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": true
+                                      }
+                                  ]
+                              }
+                          }
+                      }
+                  ]
+              },
+              "description": "处理数据过滤",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "逻辑控制组件",
+              "output": null,
+              "expressionMapper": "{ \"processorType\":\"filter\", \"expressionMapper\":{ \"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\" },\"customExpressionMapper\":false}",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "choice",
+              "icon": "icon-a-lianhe290",
+              "processorType": "choice",
+              "metaInfo": {
+                  "title": "决策设置",
+                  "properties": [],
+                  "branches": [
+                      {
+                          "processortype": "when",
+                          "meta_info": {
+                              "title": "决策设置",
+                              "properties": [
+                                  {
+                                      "title": "过滤模式",
+                                      "name": "model",
+                                      "type": "String",
+                                      "form": "select",
+                                      "enum": [
+                                          {
+                                              "name": "简单模式",
+                                              "value": "simple"
+                                          },
+                                          {
+                                              "name": "表达式模式",
+                                              "value": "expression"
+                                          }
+                                      ],
+                                      "required": true,
+                                      "extend": {
+                                          "simple": {
+                                              "position": "model",
+                                              "content": [
+                                                  {
+                                                      "position": "default",
+                                                      "title": "输入",
+                                                      "name": "input",
+                                                      "type": "String",
+                                                      "form": "input",
+                                                      "required": false
+                                                  },
+                                                  {
+                                                      "position": "default",
+                                                      "type": "String",
+                                                      "title": "匹配模式",
+                                                      "name": "match",
+                                                      "form": "select",
+                                                      "enum": [
+                                                          {
+                                                              "name": "&gt;",
+                                                              "value": "&gt;"
+                                                          },
+                                                          {
+                                                              "name": "&gt;=",
+                                                              "value": "&gt;="
+                                                          },
+                                                          {
+                                                              "name": "&lt;",
+                                                              "value": "&lt;"
+                                                          },
+                                                          {
+                                                              "name": "&lt;=",
+                                                              "value": "&lt;="
+                                                          }
+                                                      ],
+                                                      "required": false
+                                                  },
+                                                  {
+                                                      "position": "default",
+                                                      "type": "String",
+                                                      "title": "预期值",
+                                                      "name": "compare_value",
+                                                      "form": "input",
+                                                      "required": false
+                                                  }
+                                              ]
+                                          },
+                                          "expression": {
+                                              "position": "model",
+                                              "content": [
+                                                  {
+                                                      "position": "default",
+                                                      "title": "表达式",
+                                                      "name": "expression",
+                                                      "type": "String",
+                                                      "form": "input",
+                                                      "required": true
+                                                  }
+                                              ]
+                                          }
+                                      }
+                                  }
+                              ]
+                          },
+                          "branches": [],
+                          "fixed": true
+                      },
+                      {
+                          "processortype": "otherwise",
+                          "meta_info": {},
+                          "branches": [],
+                          "fixed": false
+                      }
+                  ]
+              },
+              "description": "choice",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "逻辑控制组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"choice\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "loop",
+              "icon": "icon-a-zu10160",
+              "processorType": "loop",
+              "metaInfo": {
+                  "title": "循环设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "连接名称",
+                          "name": "mode",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [
+                              {
+                                  "name": "次数",
+                                  "value": "count"
+                              },
+                              {
+                                  "name": "Object/Array",
+                                  "value": "object"
+                              }
+                          ],
+                          "vauleUrl": null,
+                          "required": true,
+                          "extend": {
+                              "count": {
+                                  "position": "model",
+                                  "title": "固定次数",
+                                  "name": "topic",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              },
+                              "object": {
+                                  "position": "model",
+                                  "title": "Object/Array",
+                                  "name": "topic",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              }
+                          }
+                      }
+                  ]
+              },
+              "description": "loop",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "逻辑控制组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"loop\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "variableSet",
+              "icon": null,
+              "processorType": "variableSet",
+              "metaInfo": {
+                  "title": "变量设置",
+                  "properties": [
+                      {
+                          "position": "model",
+                          "title": "数据设置",
+                          "name": "setData",
+                          "content": [
+                              {
+                                  "position": "default",
+                                  "title": "键",
+                                  "name": "key",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              },
+                              {
+                                  "position": "default",
+                                  "title": "值",
+                                  "name": "value",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "description": "变量设置",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "逻辑控制组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"mqttSender\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "variableMove",
+              "icon": null,
+              "processorType": "variableMove",
+              "metaInfo": {
+                  "title": "移除变量设置",
+                  "properties": [
+                      {
+                          "position": "model",
+                          "title": "设置",
+                          "name": "setData",
+                          "content": [
+                              {
+                                  "position": "default",
+                                  "title": "键",
+                                  "name": "key",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "description": "变量移除",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "逻辑控制组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"mqttSender\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          }
+      ]
+  },
+  {
+      "name": "数据访问组件",
+      "description": "数据访问组件",
+      "processorMetaVOList": [
+          {
+              "name": "rest",
+              "icon": null,
+              "processorType": "rest",
+              "metaInfo": {
+                  "title": "HTTP请求设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "请求方法",
+                          "name": "request_method",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [
+                              {
+                                  "name": "GET",
+                                  "value": "GET"
+                              },
+                              {
+                                  "name": "POST",
+                                  "value": "POST"
+                              },
+                              {
+                                  "name": "PUT",
+                                  "value": "PUT"
+                              },
+                              {
+                                  "name": "DELETE",
+                                  "value": "DELETE"
+                              }
+                          ],
+                          "required": true
+                      },
+                      {
+                          "position": "default",
+                          "title": "请求路径",
+                          "name": "request_url",
+                          "type": "String",
+                          "form": "input",
+                          "required": true
+                      },
+                      {
+                          "position": "model",
+                          "title": "数据设置",
+                          "name": "data_set",
+                          "required": true,
+                          "content": [
+                              {
+                                  "position": "default",
+                                  "title": "请求头设置",
+                                  "name": "set_header",
+                                  "type": "List",
+                                  "form": "table",
+                                  "required": true,
+                                  "table": [
+                                      {
+                                          "position": "default",
+                                          "title": "键",
+                                          "name": "key",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "值",
+                                          "name": "value",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              {
+                                  "position": "default",
+                                  "title": "请求参数设置",
+                                  "name": "set_param",
+                                  "type": "List",
+                                  "form": "table",
+                                  "required": true,
+                                  "table": [
+                                      {
+                                          "position": "default",
+                                          "title": "键",
+                                          "name": "key",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": true
+                                      },
+                                      {
+                                          "position": "default",
+                                          "title": "值",
+                                          "name": "value",
+                                          "type": "String",
+                                          "form": "input",
+                                          "required": true
+                                      }
+                                  ]
+                              },
+                              {
+                                  "position": "default",
+                                  "title": "请求体类型",
+                                  "name": "body_type",
+                                  "type": "String",
+                                  "form": "select",
+                                  "enmu": [
+                                      {
+                                          "name": "raw",
+                                          "value": "raw"
+                                      }
+                                  ],
+                                  "required": true
+                              },
+                              {
+                                  "position": "default",
+                                  "title": "请求体",
+                                  "name": "body",
+                                  "type": "String",
+                                  "form": "textArea",
+                                  "required": true
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "description": "rest",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "逻辑控制组件",
+              "output": "",
+              "expressionMapper": "{\"processorType\":\"rest\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "kafkaSender",
+              "icon": "icon-a-zu10157",
+              "processorType": "kafkaSender",
+              "metaInfo": {
+                  "title": "kafka发送消息设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "连接名称",
+                          "name": "resource",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [],
+                          "vauleUrl": "/integration/component/instance/names?type=kafka&appid=(?)",
+                          "required": true
+                      },
+                      {
+                          "position": "model",
+                          "title": "消息配置",
+                          "name": "message_configuare",
+                          "content": [
+                              {
+                                  "title": "主题",
+                                  "name": "topic",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              },
+                              {
+                                  "title": "消息体",
+                                  "name": "body",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "description": "kafka消息发送器",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "数据访问组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"kafkasender\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "database",
+              "icon": null,
+              "processorType": "database",
+              "metaInfo": {
+                  "title": "database设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "连接名称",
+                          "name": "resource",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [],
+                          "vauleUrl": "/systemlink/integration/component/instance/names?type=DataBase&appid=?",
+                          "required": true
+                      },
+                      {
+                          "position": "default",
+                          "title": "操作类型",
+                          "name": "operation",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [
+                              {
+                                  "name": "查询",
+                                  "value": "select"
+                              },
+                              {
+                                  "name": "新增",
+                                  "value": "insert"
+                              },
+                              {
+                                  "name": "修改",
+                                  "value": "update"
+                              },
+                              {
+                                  "name": "删除",
+                                  "value": "delete"
+                              }
+                          ],
+                          "vauleUrl": null,
+                          "extend": {
+                              "insert": {
+                                  "position": "model",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "操作模式",
+                                          "name": "operationType",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "简单模式",
+                                                  "value": "simple"
+                                              },
+                                              {
+                                                  "name": "表达式模式",
+                                                  "value": "expression"
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "extend": {
+                                              "simple": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表选择",
+                                                          "name": "operationTable",
+                                                          "type": "String",
+                                                          "form": "select",
+                                                          "enum": [],
+                                                          "vauleUrl": "/systemlink/integration/processor/database/tables?appid=(?)&resource=(?)",
+                                                          "required": false
+                                                      },
+                                                      {
+                                                          "position": "default",
+                                                          "title": "设置值",
+                                                          "name": "setList",
+                                                          "type": "List",
+                                                          "form": "table",
+                                                          "table": [
+                                                              {
+                                                                  "title": "字段选择",
+                                                                  "name": "fieldName",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "enum": [],
+                                                                  "vauleUrl": "/systemlink/integration/processor/database/fields?appid=(?)&resource=(?)&operationTable=(?)",
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "title": "值",
+                                                                  "name": "value",
+                                                                  "type": "String",
+                                                                  "form": "input",
+                                                                  "required": false
+                                                              }
+                                                          ],
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              },
+                                              "expression": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表达式",
+                                                          "name": "expression",
+                                                          "type": "String",
+                                                          "form": "input",
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              }
+                                          }
+                                      }
+                                  ]
+                              },
+                              "delete": {
+                                  "position": "model",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "操作模式",
+                                          "name": "operationType",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "简单模式",
+                                                  "value": "simple"
+                                              },
+                                              {
+                                                  "name": "表达式模式",
+                                                  "value": "expression"
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "extend": {
+                                              "simple": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表选择",
+                                                          "name": "operationTable",
+                                                          "type": "String",
+                                                          "form": "select",
+                                                          "enum": [],
+                                                          "vauleUrl": "/systemlink/integration/processor/database/tables?appid=(?)&resource=(?)",
+                                                          "required": false
+                                                      },
+                                                      {
+                                                          "position": "default",
+                                                          "title": "过滤条件",
+                                                          "name": "filterList",
+                                                          "type": "List",
+                                                          "form": "table",
+                                                          "table": [
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "字段选择",
+                                                                  "name": "fieldName",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "enum": [],
+                                                                  "vauleUrl": "/systemlink/integration/processor/database/fields?appid=(?)&resource=(?)&operationTable=(?)",
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "比较符",
+                                                                  "name": "compare",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "vauleUrl": null,
+                                                                  "enum": [
+                                                                      {
+                                                                          "name": ">",
+                                                                          "value": ">"
+                                                                      },
+                                                                      {
+                                                                          "name": "<",
+                                                                          "value": "<"
+                                                                      },
+                                                                      {
+                                                                          "name": "=",
+                                                                          "value": "="
+                                                                      },
+                                                                      {
+                                                                          "name": ">=",
+                                                                          "value": ">="
+                                                                      },
+                                                                      {
+                                                                          "name": "<=",
+                                                                          "value": "<="
+                                                                      },
+                                                                      {
+                                                                          "name": "like",
+                                                                          "value": "like"
+                                                                      }
+                                                                  ],
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "预期值",
+                                                                  "name": "compareValue",
+                                                                  "type": "String",
+                                                                  "form": "input",
+                                                                  "required": false
+                                                              }
+                                                          ],
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              },
+                                              "expression": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表达式",
+                                                          "name": "expression",
+                                                          "type": "String",
+                                                          "form": "input",
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              }
+                                          }
+                                      }
+                                  ]
+                              },
+                              "update": {
+                                  "position": "model",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "操作模式",
+                                          "name": "operationType",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "简单模式",
+                                                  "value": "simple"
+                                              },
+                                              {
+                                                  "name": "表达式模式",
+                                                  "value": "expression"
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "extend": {
+                                              "simple": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表选择",
+                                                          "name": "operationTable",
+                                                          "type": "String",
+                                                          "form": "select",
+                                                          "enum": [],
+                                                          "vauleUrl": "/systemlink/integration/processor/database/tables?appid=(?)&resource=(?)",
+                                                          "required": false
+                                                      },
+                                                      {
+                                                          "position": "default",
+                                                          "title": "设置值",
+                                                          "name": "setList",
+                                                          "type": "List",
+                                                          "form": "table",
+                                                          "table": [
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "字段选择",
+                                                                  "name": "fieldName",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "enum": [],
+                                                                  "vauleUrl": "/systemlink/integration/processor/database/fields?appid=(?)&resource=(?)&operationTable=(?)",
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "值",
+                                                                  "name": "value",
+                                                                  "type": "String",
+                                                                  "form": "input",
+                                                                  "required": false
+                                                              }
+                                                          ],
+                                                          "required": false
+                                                      },
+                                                      {
+                                                          "position": "default",
+                                                          "title": "过滤条件",
+                                                          "name": "filterList",
+                                                          "type": "List",
+                                                          "form": "table",
+                                                          "table": [
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "字段选择",
+                                                                  "name": "fieldName",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "enum": [],
+                                                                  "vauleUrl": "/systemlink/integration/processor/database/fields?appid=(?)&resource=(?)&operationTable=(?)",
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "比较符",
+                                                                  "name": "compare",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "vauleUrl": null,
+                                                                  "enum": [
+                                                                      {
+                                                                          "name": ">",
+                                                                          "value": ">"
+                                                                      },
+                                                                      {
+                                                                          "name": "<",
+                                                                          "value": "<"
+                                                                      },
+                                                                      {
+                                                                          "name": "=",
+                                                                          "value": "="
+                                                                      },
+                                                                      {
+                                                                          "name": ">=",
+                                                                          "value": ">="
+                                                                      },
+                                                                      {
+                                                                          "name": "<=",
+                                                                          "value": "<="
+                                                                      },
+                                                                      {
+                                                                          "name": "like",
+                                                                          "value": "like"
+                                                                      }
+                                                                  ],
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "预期值",
+                                                                  "name": "compareValue",
+                                                                  "type": "String",
+                                                                  "form": "input",
+                                                                  "required": false
+                                                              }
+                                                          ],
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              },
+                                              "expression": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表达式",
+                                                          "name": "expression",
+                                                          "type": "String",
+                                                          "form": "input",
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              }
+                                          }
+                                      }
+                                  ]
+                              },
+                              "select": {
+                                  "position": "model",
+                                  "content": [
+                                      {
+                                          "position": "default",
+                                          "title": "操作模式",
+                                          "name": "operationType",
+                                          "type": "String",
+                                          "form": "select",
+                                          "enum": [
+                                              {
+                                                  "name": "简单模式",
+                                                  "value": "simple"
+                                              },
+                                              {
+                                                  "name": "表达式模式",
+                                                  "value": "expression"
+                                              }
+                                          ],
+                                          "vauleUrl": null,
+                                          "extend": {
+                                              "simple": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表选择",
+                                                          "name": "operationTable",
+                                                          "type": "String",
+                                                          "form": "select",
+                                                          "enum": [],
+                                                          "vauleUrl": "/systemlink/integration/processor/database/tables?appid=(?)&resource=(?)",
+                                                          "required": false
+                                                      },
+                                                      {
+                                                          "position": "default",
+                                                          "title": "查询字段",
+                                                          "name": "setList",
+                                                          "type": "List",
+                                                          "form": "select",
+                                                          "multiple": true,
+                                                          "vauleUrl": "/systemlink/integration/processor/database/fields?appid=(?)&resource=(?)&operationTable=(?)",
+                                                          "enum": [],
+                                                          "required": false
+                                                      },
+                                                      {
+                                                          "position": "default",
+                                                          "title": "过滤条件",
+                                                          "name": "filterList",
+                                                          "type": "List",
+                                                          "form": "table",
+                                                          "table": [
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "字段选择",
+                                                                  "name": "fieldName",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "enum": [],
+                                                                  "vauleUrl": "/systemlink/integration/processor/database/fields?appid=(?)&resource=(?)&operationTable=(?)",
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "比较符",
+                                                                  "name": "compare",
+                                                                  "type": "String",
+                                                                  "form": "select",
+                                                                  "vauleUrl": null,
+                                                                  "enum": [
+                                                                      {
+                                                                          "name": ">",
+                                                                          "value": ">"
+                                                                      },
+                                                                      {
+                                                                          "name": "<",
+                                                                          "value": "<"
+                                                                      },
+                                                                      {
+                                                                          "name": "=",
+                                                                          "value": "="
+                                                                      },
+                                                                      {
+                                                                          "name": ">=",
+                                                                          "value": ">="
+                                                                      },
+                                                                      {
+                                                                          "name": "<=",
+                                                                          "value": "<="
+                                                                      },
+                                                                      {
+                                                                          "name": "like",
+                                                                          "value": "like"
+                                                                      }
+                                                                  ],
+                                                                  "required": false
+                                                              },
+                                                              {
+                                                                  "position": "default",
+                                                                  "title": "预期值",
+                                                                  "name": "compareValue",
+                                                                  "type": "String",
+                                                                  "form": "input",
+                                                                  "required": false
+                                                              }
+                                                          ],
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              },
+                                              "expression": {
+                                                  "position": "default",
+                                                  "content": [
+                                                      {
+                                                          "position": "default",
+                                                          "title": "表达式",
+                                                          "name": "expression",
+                                                          "type": "String",
+                                                          "form": "input",
+                                                          "required": false
+                                                      }
+                                                  ]
+                                              }
+                                          }
+                                      }
+                                  ]
+                              }
+                          },
+                          "required": false
+                      }
+                  ]
+              },
+              "description": "数据库访问组件",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "数据访问组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"database\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          },
+          {
+              "name": "mqttSender",
+              "icon": "icon-a-zu10154",
+              "processorType": "mqttSender",
+              "metaInfo": {
+                  "title": "MQTT发送消息设置",
+                  "properties": [
+                      {
+                          "position": "default",
+                          "title": "连接名称",
+                          "name": "resource",
+                          "type": "String",
+                          "form": "select",
+                          "enum": [],
+                          "vauleUrl": "/integration/component/instance/names?type=mqtt&appid=(?)",
+                          "required": true
+                      },
+                      {
+                          "position": "model",
+                          "title": "消息配置",
+                          "name": "message_configuare",
+                          "content": [
+                              {
+                                  "title": "主题",
+                                  "name": "topic",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              },
+                              {
+                                  "title": "消息体",
+                                  "name": "body",
+                                  "type": "String",
+                                  "form": "input",
+                                  "required": true
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "description": "mqtt消息发生器",
+              "processorVersion": "v1",
+              "isTrigger": false,
+              "tag": "数据访问组件",
+              "output": null,
+              "expressionMapper": "{\"processorType\":\"mqttSender\",\"expressionMapper\":{\"result\":\"${exchangeProperty.MessageHistoryMap[$id].getBody()%s}\"},\"customExpressionMapper\":true}",
+              "isCustomExpressionMapper": "1"
+          }
+      ]
+  }
+]

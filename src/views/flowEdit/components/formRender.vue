@@ -8,7 +8,7 @@
       <div class="form-item" v-for="field in formConfig.properties" :key="field.name">
         <div class="label">{{ field.title }}</div>
         <div class="opt">
-          <field-factory :node-data="field" v-model="properties[field.name]"></field-factory>
+          <field-factory :node-data="field" v-model="properties[field.name]" @input="updateProperties"></field-factory>
           <el-button class="set-btn"
                      size="default"
                      type="primary"
@@ -28,7 +28,7 @@
           <template
               v-if="field.extend&&field.extend[properties[field.name]]&&field.extend[properties[field.name]].position==='default'">
             <div class="opt" v-for="iField in field.extend[properties[field.name]].content">
-              <field-factory :node-data="iField" :key="iField.name"></field-factory>
+              <field-factory :node-data="iField" :key="iField.name" v-model="properties[iField.name]" @input="updateProperties"></field-factory>
             </div>
           </template>
         </template>
@@ -37,8 +37,13 @@
   </div>
 
   <el-dialog title="设置" v-model="dialogFormVisible" destroy-on-close>
-    <div class="dia-form">
-      <div class="form-line" v-for="field in diagFormConfig.content">
+    <el-form :model="dialogForm" class="dia-form" label-width="120px">
+      <el-form-item v-for="field in dialogFormConfig" :label="field.title">
+        <field-factory :node-data="field" v-model="dialogForm[field.name]"></field-factory>
+      </el-form-item>
+    </el-form>
+    <!-- <div class="dia-form">
+      <div class="form-line" v-for="field in dialogFormConfig.content">
         <field-factory :node-data="field" v-model="properties[field.name]"></field-factory>
         <field-factory
             :key="subField.name"
@@ -47,46 +52,66 @@
             :node-data="subField">
         </field-factory>
       </div>
-    </div>
+    </div> -->
     <template #footer>
       <el-button @click="dialogFormVisible = false">取 消</el-button>
-      <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+      <el-button type="primary" @click="onSubmit">确 定</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script lang="ts" setup>
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
-import {readonly, ref} from "vue";
+import { readonly, ref, defineProps, defineEmits } from "vue";
 
 const props = defineProps({
   formConfig: {
     type: Object, //(string也可以是其他你自定义的接口)
     required: true,
-    default: () => []
+    default: () => {}
+  },
+  modelValue: {
+    type: Object, //(string也可以是其他你自定义的接口)
+    required: true,
+    default: () => {}
   }
 })
 const formInfo = readonly(props.formConfig);
-let properties = ref({});
+let properties = ref(props.modelValue);
 //弹窗展示
+let dialogForm = ref({});
 let dialogFormVisible = ref(false);
-let diagFormConfig = ref({});
+let dialogFormConfig = ref({});
+let emits = defineEmits(['update:modelValue']);
 
-console.log(formInfo);
+function updateProperties(param) {
+  properties.value = {...properties.value, ...param}
+  emits('update:modelValue', properties.value)
+}
+
 //设置需要输入的参数 用于v-model
 // function getProperties() {
-//   // formInfo.properties.forEach(item=>{
-//   //   properties.value[item.name] = '';
-//   // });
+//   formInfo.properties.forEach(item=>{
+//     properties.value[item.name] = '';
+//   });
 // }
 //设置弹窗内容
 function getExtendData(modelData) {
-  console.log(modelData)
-  diagFormConfig.value = modelData;
+  dialogFormConfig.value = modelData.content;
   dialogFormVisible.value = true;
+  modelData.content.forEach(item => {
+    dialogForm[item.name] = item.value || '';
+  })
 }
 
 // getProperties();
+
+function onSubmit() {
+  console.log('---- properties: ', properties.value);
+  console.log('---- dialogForm: ', dialogForm.value);
+  dialogFormVisible.value = false
+  emits('update:modelValue', Object.assign({}, properties.value, dialogForm.value))
+}
 
 </script>
 
@@ -125,11 +150,11 @@ function getExtendData(modelData) {
 }
 
 .dia-form {
+  width: 50%;
   * {
     user-select: none !important;
 
   }
-
   .form-line {
     margin: 0 20px;
 

@@ -11,25 +11,33 @@
       </div>
     </div>
     <div class="right">
+      <!-- 撤销 -->
       <el-button icon="DArrowLeft" plain size="large" circle text/>
+      <!-- 取消撤销 -->
       <el-button icon="DArrowRight" size="large" circle text/>
       <div class="v-line"></div>
+      <!-- 设置 -->
       <el-button icon="Setting" text circle size="large"/>
+      <!-- 测试 -->
       <el-button icon="VideoPlay" text circle size="large"/>
+      <!-- 发布 -->
       <el-button icon="Promotion" text circle size="large"/>
+      <!-- 清理 -->
       <el-button icon="Briefcase" text circle size="large"/>
     </div>
   </div>
   <div class="flow-center">
+    <!-- 画布区域 -->
     <div class="flow-left">
       <div class="flow-box" id="boxRf"></div>
       <div class="flow-bottom"></div>
     </div>
+    <!-- 右侧组件栏、设置项 -->
     <div class="tool-box">
       <el-tabs v-model="activeName" class="demo-tabs">
         <el-tab-pane label="组件栏" name="组件栏">
           <el-input class="input" placeholder="关键词搜索" size="large"/>
-
+          <el-skeleton style="padding: 12px;" v-if="loading" :rows="5" animated />
           <div class="nodeGroup"
                :class="{active:curActive===index}"
                v-for="(item,index) in nodeGroup">
@@ -41,16 +49,18 @@
               <span>{{ item.name }}</span>
             </div>
             <div class="item-box">
-              <rectNode :icon="node.icon"
-                        :label="node.description"
-                        @mousedown="dropNode($event,node)"
-                        v-for="node in item.processorMetaVOList"></rectNode>
+              <rectNode
+                :icon="node.icon"
+                :label="node.description"
+                @mousedown="dropNode($event,node)"
+                v-for="node in item.processorMetaVOList"
+              ></rectNode>
             </div>
           </div>
-
         </el-tab-pane>
         <el-tab-pane label="设置项" name="设置项">
-          <form-render :formConfig="panelData" v-if="panelData"></form-render>
+          <button @click="showConsole">console</button>
+          <form-render :formConfig="panelData" v-if="panelData" v-model="properties"></form-render>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -61,11 +71,11 @@
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
 import choiceNode from "@/components/nodes/choiceNode.vue"
-import {onMounted, ref, createVNode} from "vue";
+import { onMounted, ref, createVNode } from "vue";
 import {Graph, Addon, Rectangle, Shape, Dom, Node} from '@antv/x6';
 import {NodeGroup} from "@/api/api";
+import branch from "@/utils/choice/branch";
 import formRender from './components/formRender.vue'
-import FormRender from "@/views/flowEdit/components/formRender.vue";
 
 let dnd: Addon.Dnd;
 let graph: Graph;
@@ -73,6 +83,12 @@ const activeName = ref('组件栏');
 let curActive = ref(0);
 let nodeGroup = ref();
 let panelData = ref();
+let properties = ref();
+let loading = ref(false);
+
+function showConsole() {
+  console.log('---- properties: ', properties.value)
+}
 
 function initEditor() {
   //注册组件节点
@@ -108,6 +124,9 @@ function initEditor() {
       },
     },
     autoResize: true,
+    keyboard: {
+      enabled: true,
+    },
     mousewheel: {
       enabled: true,
       zoomAtMousePosition: true,
@@ -205,7 +224,12 @@ function initEditor() {
     },
   })
   graph.on('node:click', ({node}) => {
-    panelData.value = JSON.parse(node.data.nodeData.metaInfo);
+    if (typeof node.data.nodeData.metaInfo === 'string') {
+      panelData.value = JSON.parse(node.data.nodeData.metaInfo);
+    } else {
+      panelData.value = node.data.nodeData.metaInfo
+    }
+    properties.value = node.data.properties;
     activeName.value = '设置项';
   })
   // 控制连接桩显示/隐藏
@@ -276,7 +300,6 @@ function initEditor() {
         })
       }
 
-
       if (hasChange) {
         currentParent.prop(
             {
@@ -292,42 +315,23 @@ function initEditor() {
   })
   graph.on('node:added', ({node}) => {
     if (node["component" as keyof typeof node] === "choiceNode") {
-      const {x, y} = node.position();
-      const bbox = node.getBBox();
       //元数据解析
       let choiceData = JSON.parse(node.data.nodeData.metaInfo);
-      choiceData.branches.forEach((branch,index)=>{
-        let child = graph.createNode({
-          x: x + 20,
-          y: y + 122*(index+1),
-          width: bbox.width - 40,
-          zIndex:1,
-          height: 122,
-          data: {
-            parent: true,
-            nodeData:branch
-          },
-          attrs: {
-            body: {
-              strokeWidth: 1,
-              stroke: '#5F95FF',
-              fill: '#E2F4FF',
-            },
-            text: {
-              fontSize: 12,
-              fill: '#262626',
-            },
-          },
-        });
-        node.addChild(child)
+      choiceData.branches.forEach((item, index)=>{
+        if (item.processorType === 'when') {
+          branch.create(graph, node, index, item);
+        }
       })
     }
   })
 }
 
 function initData() {
+  loading.value = true;
   NodeGroup.getGroupList({}).then((res: any) => {
     nodeGroup.value = res.data;
+  }).finally(() => {
+    loading.value = false;
   })
 }
 
@@ -346,7 +350,9 @@ function dropNode(evt: any, nodeData: any) {
         component: 'choiceNode',
         zIndex: -1,
         data: {
-          nodeData
+          kind: nodeData.name,
+          properties: {},
+          nodeData,
         }
       });
       break;
@@ -359,7 +365,9 @@ function dropNode(evt: any, nodeData: any) {
         component: 'rectNode',
         zIndex: 1,
         data: {
-          nodeData
+          kind: nodeData.name,
+          properties: {},
+          nodeData,
         }
       });
   }
