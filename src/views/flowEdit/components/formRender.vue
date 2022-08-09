@@ -39,7 +39,7 @@
   <el-dialog title="设置" v-model="dialogFormVisible" destroy-on-close>
     <el-form :model="dialogForm" class="dia-form" label-width="120px">
       <el-form-item v-for="field in dialogFormConfig" :label="field.title">
-        <field-factory :node-data="field" v-model="dialogForm[field.name]"></field-factory>
+        <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm"></field-factory>
       </el-form-item>
     </el-form>
     <!-- <div class="dia-form">
@@ -74,20 +74,27 @@ const props = defineProps({
     type: Object, //(string也可以是其他你自定义的接口)
     required: true,
     default: () => {}
+  },
+  nodeId: {
+    type: String,
+    required: true
   }
 })
 const formInfo = readonly(props.formConfig);
 let properties = reactive({...props.modelValue});
 //弹窗展示
-let dialogForm = ref({});
+let dialogForm = reactive({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
 let emits = defineEmits(['update:modelValue']);
 
 function updateProperties({name, value}) {
-  console.log('--- update: ', properties, name, value)
   properties[name] = value;
+  console.log('--- update: ', properties, name, value)
   emits('update:modelValue', properties)
+}
+function updateDialogForm({name, value}) {
+  dialogForm[name] = value;
 }
 
 //设置需要输入的参数 用于v-model
@@ -98,20 +105,20 @@ function updateProperties({name, value}) {
 // }
 //设置弹窗内容
 function getExtendData(modelData) {
+  console.log('--- modelData: ', modelData);
   dialogFormConfig.value = modelData.content;
   dialogFormVisible.value = true;
+  dialogForm = {};
   modelData.content.forEach(item => {
-    dialogForm[item.name] = item.value || '';
+    dialogForm[item.name] = props.modelValue[item.name] || '';
   })
 }
 
 // getProperties();
 
 function onSubmit() {
-  console.log('---- properties: ', properties.value);
-  console.log('---- dialogForm: ', dialogForm.value);
   dialogFormVisible.value = false;
-  emits('update:modelValue', Object.assign({}, properties.value, dialogForm.value));
+  emits('update:modelValue', Object.assign(properties, dialogForm));
 }
 
 watch(() => props.modelValue, (newValue, oldValue) => {
