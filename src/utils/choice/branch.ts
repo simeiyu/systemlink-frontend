@@ -26,6 +26,7 @@ export default {
         },
       },
     });
-    node.addChild(child)
+    node.addChild(child);
+    return child;
   }
 }

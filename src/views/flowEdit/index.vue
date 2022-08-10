@@ -59,7 +59,7 @@
           </div>
         </el-tab-pane>
         <el-tab-pane label="设置项" name="设置项">
-          <form-render :formConfig="activeNode.metaInfo" v-if="activeNode" v-model="activeNode.properties" :nodeId="activeNode.id" @update:modelValue="updateNodeProperties"></form-render>
+          <form-render v-if="activeNode" :nodeId="activeNode.id" :kind="activeNode.kind"></form-render>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -67,33 +67,30 @@
 </template>
 
 <script lang="ts" setup>
+import { onMounted, ref, createVNode, computed } from "vue";
+import { Graph, Addon, Rectangle, Shape, Dom, Node } from '@antv/x6';
+import { useStore } from 'vuex';
+import { get } from 'lodash';
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
 import choiceNode from "@/components/nodes/choiceNode.vue"
 import loopNode from "@/components/nodes/loopNode.vue"
-import { onMounted, ref, createVNode } from "vue";
-import {Graph, Addon, Rectangle, Shape, Dom, Node} from '@antv/x6';
 import {NodeGroup} from "@/api/api";
 import branch from "@/utils/choice/branch";
 import formRender from './components/formRender.vue'
+import { Processor } from '@/store/index';
+
+const store = useStore();
 
 let dnd: Addon.Dnd;
 let graph: Graph;
 const activeName = ref('组件栏');
 let curActive = ref(0);
-let nodeGroup = ref();
+let nodeGroup = computed(() => store.state.nodeGroup);
 let activeNode = ref();
-// let panelData = ref();
-// let properties = ref();
-let loading = ref(false);
+let loading = computed(() => store.state.nodeGroupLoading);
 let canRedo = ref(true);
 let canUndo = ref(true);
-
-function updateNodeProperties() {
-  const node = graph.getCellById(activeNode.value.id);
-  console.log('---- updateNodeProperties: ', node.data.properties)
-  node.data.properties = activeNode.value.properties
-}
 
 function initEditor() {
   //注册组件节点
@@ -260,18 +257,9 @@ function initEditor() {
           : true
     },
   })
+  // 点击画布中的节点
   graph.on('node:click', ({node}) => {
-    let metaInfo;
-    if (typeof node.data.nodeData.metaInfo === 'string') {
-      metaInfo = JSON.parse(node.data.nodeData.metaInfo);
-    } else {
-      metaInfo = node.data.nodeData.metaInfo
-    }
-    activeNode.value = {
-      id: node.id,
-      metaInfo: metaInfo,
-      properties: node.data.properties
-    }
+    activeNode.value = {id: node.id, kind: get(node, 'data.kind')};
     activeName.value = '设置项';
   })
   // 控制连接桩显示/隐藏
@@ -356,33 +344,43 @@ function initEditor() {
     }
   })
   graph.on('node:added', ({node}) => {
+    const kind = get(node, 'data.kind');
+    const processor: Processor = {
+      processorId: node.id,
+      kind: kind,
+      properties: {},
+      output: ''
+    }
     if (node["component" as keyof typeof node] === "choiceNode") {
       //元数据解析
-      let choiceData = JSON.parse(node.data.nodeData.metaInfo);
-      choiceData.branches.forEach((item, index)=>{
-        if (item.processorType === 'when') {
-          branch.create(graph, node, index, item);
-        }
-      })
+      processor.processors = [];
+      const component = store.state.componentInfo[kind];
+      if (component) {
+        let choiceData = JSON.parse(component.metaInfo);
+        choiceData.branches.forEach((item, index)=>{
+          if (item.processorType === 'when') {
+            const child = branch.create(graph, node, index, item);
+            processor.processors.push({
+              processorId: child.id,
+              kind: item.processorType,
+              properties: {},
+              output: ''
+            })
+          }
+        });
+      }
     }
+    store.commit('addProcessor', processor);
   })
   canRedo.value = graph.history.canRedo();
   canUndo.value = graph.history.canUndo();
 }
 
-function initData() {
-  loading.value = true;
-  NodeGroup.getGroupList({}).then((res: any) => {
-    nodeGroup.value = res.data;
-  }).finally(() => {
-    loading.value = false;
-  })
-}
-
 function dropNode(evt: any, nodeData: any) {
   let node: Node | undefined;
   //判断节点类型 实现不同类型的节点添加到画布
-  switch (nodeData.name) {
+  const { processorType, description, icon } = nodeData;
+  switch (processorType) {
     case 'loop':
       node = graph.createNode({
         ports: {...ports},
@@ -392,9 +390,7 @@ function dropNode(evt: any, nodeData: any) {
         component: 'loopNode',
         zIndex: -1,
         data: {
-          kind: nodeData.name,
-          properties: {},
-          nodeData,
+          kind: processorType,
         }
       });
       break;
@@ -407,9 +403,7 @@ function dropNode(evt: any, nodeData: any) {
         component: 'choiceNode',
         zIndex: -1,
         data: {
-          kind: nodeData.name,
-          properties: {},
-          nodeData,
+          kind: processorType,
         }
       });
       break;
@@ -422,9 +416,8 @@ function dropNode(evt: any, nodeData: any) {
         component: 'rectNode',
         zIndex: 2,
         data: {
-          kind: nodeData.name,
-          properties: {},
-          nodeData,
+          kind: processorType,
+          description, icon
         }
       });
   }
@@ -442,7 +435,8 @@ function onUndo() {
 
 onMounted(() => {
   initEditor()
-  initData()
+  // initData()
+  store.dispatch('fetchComponents')
 })
 
 </script>

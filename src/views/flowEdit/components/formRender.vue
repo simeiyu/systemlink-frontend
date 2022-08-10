@@ -50,38 +50,38 @@
 </template>
 
 <script lang="ts" setup>
+import { readonly, ref, defineProps, defineEmits, watch, reactive, computed } from "vue";
+import { useStore } from 'vuex';
+import { get } from 'lodash';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
-import { readonly, ref, defineProps, defineEmits, watch, reactive } from "vue";
+
+const store = useStore();
 
 const props = defineProps({
-  formConfig: {
-    type: Object, //(string也可以是其他你自定义的接口)
-    required: true,
-    default: () => {}
-  },
-  modelValue: {
-    type: Object, //(string也可以是其他你自定义的接口)
-    required: true,
-    default: () => {}
+  kind: {
+    type: String,
+    required: true
   },
   nodeId: {
     type: String,
     required: true
   }
-})
-const formInfo = readonly(props.formConfig);
-let properties = reactive({...props.modelValue});
+});
+const formConfig = computed(() => {
+  const metaInfo = get(store.state.componentInfo, `${props.kind}.metaInfo`, '');
+  return JSON.parse(metaInfo);
+});
+let properties = reactive({});
 //弹窗展示
 let dialogForm = reactive({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
-let emits = defineEmits(['update:modelValue']);
+// let emits = defineEmits(['update:modelValue']);
 
 function updateProperties({name, value}) {
   properties[name] = value;
-  console.log('--- formConfig: ', formConfig)
   console.log('--- update: ', properties)
-  emits('update:modelValue', properties)
+  // emits('update:modelValue', properties)
 }
 function updateDialogForm({name, value}) {
   dialogForm[name] = value;
@@ -101,11 +101,11 @@ function getExtendData(modelData) {
   if (modelData.content) {
     dialogFormConfig.value = modelData.content
     modelData.content.forEach(item => {
-      dialogForm[item.name] = props.modelValue[item.name] || '';
+      dialogForm[item.name] = properties[item.name] || '';
     })
   } else {
     dialogFormConfig.value = [modelData];
-    dialogForm[modelData.name] = props.modelValue[modelData.name] || '';
+    dialogForm[modelData.name] = properties[modelData.name] || '';
   }
 }
 
@@ -113,13 +113,8 @@ function getExtendData(modelData) {
 
 function onSubmit() {
   dialogFormVisible.value = false;
-  emits('update:modelValue', Object.assign(properties, dialogForm));
+  // emits('update:modelValue', Object.assign(properties, dialogForm));
 }
-
-watch(() => props.modelValue, (newValue, oldValue) => {
-  properties = newValue;
-  console.log('--- watch: ', properties)
-})
 
 </script>
 
