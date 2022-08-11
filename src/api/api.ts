@@ -13,3 +13,23 @@ export class NodeGroup {       // 模块一
         return request('/systemlink/processorMeta/groupList',params, 'get')
     }
 }
+
+/**
+ * @description 画布json和逻辑json
+ */
+export class FlowRoute {
+  /**
+   * @description 查询前端输出的画布json和逻辑json
+   * @param {nodeId} - 参数: 算盘后面板节点id
+   * @return {Request} result
+   */
+  static async get(nodeId) {
+    return request('/systemlink/integration/route', { nodeId }, 'get')
+  }
+}
+
+export class Suanpan {
+  static async getContext() {
+    return request('/sp/context/get')
+  }
+}

@@ -7,7 +7,7 @@ export default {
       x: x + 20,
       y: y + 122 * index + space,
       width: bbox.width - 40,
-      zIndex:1,
+      zIndex: 2,
       height: 122,
       data: {
         kind: 'when',

@@ -50,52 +50,46 @@
 </template>
 
 <script lang="ts" setup>
-import { readonly, ref, defineProps, defineEmits, watch, reactive, computed } from "vue";
+import { watch, ref, defineProps, reactive } from "vue";
 import { useStore } from 'vuex';
-import { get } from 'lodash';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
+import { ActiveNode } from '@/store/type';
 
 const store = useStore();
 
-const props = defineProps({
-  kind: {
-    type: String,
-    required: true
-  },
-  nodeId: {
-    type: String,
-    required: true
-  }
-});
-const formConfig = computed(() => {
-  const metaInfo = get(store.state.componentInfo, `${props.kind}.metaInfo`, '');
-  return JSON.parse(metaInfo);
-});
-let properties = reactive({});
+interface Props {
+  node: ActiveNode;
+}
+
+const props = defineProps<Props>();
+let metaInfo = store.getters.getMetaInfo(props.node.kind);
+let formConfig = ref(metaInfo);
+let properties = ref(store.getters.getProperties(props.node.id, props.node.parentId, props.node.grantId));
 //弹窗展示
 let dialogForm = reactive({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
-// let emits = defineEmits(['update:modelValue']);
 
 function updateProperties({name, value}) {
   properties[name] = value;
-  console.log('--- update: ', properties)
-  // emits('update:modelValue', properties)
+  const _properties = {
+    ...properties.value,
+    [`${name}`]: value
+  }
+  properties.value = _properties;
+  console.log('--- updateProperties: ', _properties)
+  store.dispatch('setProperties', {
+    properties: _properties,
+    node: props.node
+  })
 }
 function updateDialogForm({name, value}) {
   dialogForm[name] = value;
 }
 
-//设置需要输入的参数 用于v-model
-// function getProperties() {
-//   formInfo.properties.forEach(item=>{
-//     properties.value[item.name] = '';
-//   });
-// }
 //设置弹窗内容
 function getExtendData(modelData) {
-  console.log('--- modelData: ', modelData);
+  console.log('--- getExtendData: ', modelData);
   dialogFormVisible.value = true;
   dialogForm = {};
   if (modelData.content) {
@@ -109,12 +103,25 @@ function getExtendData(modelData) {
   }
 }
 
-// getProperties();
-
 function onSubmit() {
   dialogFormVisible.value = false;
+  console.log('--- submit: ', properties.value, dialogForm);
+  const _properties = {
+    ...properties.value,
+    ...dialogForm
+  }
+  properties.value = _properties;
   // emits('update:modelValue', Object.assign(properties, dialogForm));
+  store.dispatch('setProperties', {
+    properties: _properties,
+    node: props.node
+  })
 }
+
+watch(() => props.node, (newValue, oldValue) => {
+  formConfig.value = store.getters.getMetaInfo(newValue.kind);
+  properties.value = store.getters.getProperties(newValue.id, newValue.parentId, newValue.grantId);
+})
 
 </script>
 

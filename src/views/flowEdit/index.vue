@@ -59,7 +59,7 @@
           </div>
         </el-tab-pane>
         <el-tab-pane label="设置项" name="设置项">
-          <form-render v-if="activeNode" :nodeId="activeNode.id" :kind="activeNode.kind"></form-render>
+          <form-render v-if="activeNode" :node="activeNode"></form-render>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -67,7 +67,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, createVNode, computed } from "vue";
+import { onMounted, Ref, ref, createVNode, computed } from "vue";
 import { Graph, Addon, Rectangle, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
 import { get } from 'lodash';
@@ -75,10 +75,9 @@ import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
 import choiceNode from "@/components/nodes/choiceNode.vue"
 import loopNode from "@/components/nodes/loopNode.vue"
-import {NodeGroup} from "@/api/api";
 import branch from "@/utils/choice/branch";
 import formRender from './components/formRender.vue'
-import { Processor } from '@/store/index';
+import { ActiveNode, Processor } from '@/store/type';
 
 const store = useStore();
 
@@ -87,8 +86,8 @@ let graph: Graph;
 const activeName = ref('组件栏');
 let curActive = ref(0);
 let nodeGroup = computed(() => store.state.nodeGroup);
-let activeNode = ref();
-let loading = computed(() => store.state.nodeGroupLoading);
+let activeNode:Ref<ActiveNode> = ref();
+let loading = computed<boolean>(() => store.state.nodeGroupLoading);
 let canRedo = ref(true);
 let canUndo = ref(true);
 
@@ -259,7 +258,11 @@ function initEditor() {
   })
   // 点击画布中的节点
   graph.on('node:click', ({node}) => {
-    activeNode.value = {id: node.id, kind: get(node, 'data.kind')};
+    const item = {id: node.id, kind: get(node, 'data.kind'), parentId: node.getParentId()};
+    if (item.parentId) {
+      item.grantId = node.parent?.getParentId();
+    }
+    activeNode.value = item;
     activeName.value = '设置项';
   })
   // 控制连接桩显示/隐藏
@@ -414,7 +417,7 @@ function dropNode(evt: any, nodeData: any) {
         height: 90,
         shape: 'vue-shape',
         component: 'rectNode',
-        zIndex: 2,
+        zIndex: 3,
         data: {
           kind: processorType,
           description, icon
@@ -436,7 +439,8 @@ function onUndo() {
 onMounted(() => {
   initEditor()
   // initData()
-  store.dispatch('fetchComponents')
+  store.dispatch('fetchComponents');
+  store.dispatch('fetchContext')
 })
 
 </script>
