@@ -49,4 +49,5 @@ export interface State {
   componentInfo: any;
   nodeGroup: Group[];
   nodeGroupLoading: boolean;
+  graphJson?: any;
 }

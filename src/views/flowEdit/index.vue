@@ -67,7 +67,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, Ref, ref, createVNode, computed } from "vue";
+import { onMounted, Ref, ref, createVNode, computed, watch, watchEffect } from "vue";
 import { Graph, Addon, Rectangle, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
 import { get } from 'lodash';
@@ -436,11 +436,23 @@ function onUndo() {
   graph.history.undo();
 }
 
+// watch(store.state.graphJson, () => {
+//   console.log('--- watch Effect')
+// })
+
+watchEffect(() => {
+  console.log('--- watch Effect')
+  graph && graph.fromJSON(store.state.graphJson)
+})
+
 onMounted(() => {
   initEditor()
-  // initData()
   store.dispatch('fetchComponents');
-  store.dispatch('fetchContext')
+  store.dispatch('fetchContext');
+  const data = store.state.graphJson;
+  if (data) {
+    graph.fromJSON(data);
+  }
 })
 
 </script>

@@ -26,6 +26,14 @@ export class FlowRoute {
   static async get(nodeId) {
     return request('/systemlink/integration/route', { nodeId }, 'get')
   }
+  /**
+   * 保存前端输出的画布json和逻辑json
+   * @param {nodeId, routeJson, showRule} 
+   * @returns 
+   */
+  static async save(param) {
+    return request('/systemlink/integration/route', param, 'post')
+  }
 }
 
 export class Suanpan {
