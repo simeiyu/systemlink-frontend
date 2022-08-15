@@ -18,12 +18,13 @@
 <script lang="ts" setup>
 import { inject, ref, reactive } from "vue-demi";
 
-let collapsed = ref(false);
-let expandSize = reactive({width: 500, height: 320});
 const getNode = inject("getNode");
 const node = getNode();
+let collapsed = ref(!!node.data.collapsed);
+let expandSize = reactive({width: 500, height: 320});
 function onToggle () {
   collapsed.value = !collapsed.value;
+  node.data.collapsed = collapsed.value;
   let toggleFunc;
   if (collapsed.value) {
     expandSize = node.getSize();

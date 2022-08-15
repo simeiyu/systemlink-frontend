@@ -22,14 +22,15 @@
 import { inject, ref, reactive } from "vue-demi";
 import branch from "@/utils/choice/branch";
 
-let collapsed = ref(false);
-let expandSize = reactive({width: 644, height: 486});
 const getNode = inject("getNode");
 const getGraph = inject("getGraph");
 const node = getNode();
 const graph = getGraph();
+let collapsed = ref(!!node.data.collapsed);
+let expandSize = reactive({width: 644, height: 486});
 function onToggle () {
   collapsed.value = !collapsed.value;
+  node.data.collapsed = collapsed.value;
   let toggleFunc;
   if (collapsed.value) {
     expandSize = node.getSize();
