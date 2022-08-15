@@ -12,6 +12,10 @@ export class NodeGroup {       // 模块一
     static async getGroupList(params) {   // 接口一
         return request('/systemlink/processorMeta/groupList',params, 'get')
     }
+
+    static async getOptions(valueUrl) {
+      return request(valueUrl)
+    }
 }
 
 /**

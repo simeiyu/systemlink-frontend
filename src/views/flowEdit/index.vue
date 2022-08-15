@@ -377,6 +377,7 @@ function initEditor() {
         });
       }
     }
+    // 将节点加入到flowOut.processors
     store.commit('addProcessor', processor);
   })
   canRedo.value = graph.history.canRedo();

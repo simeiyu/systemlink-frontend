@@ -22,12 +22,13 @@
 <script lang="ts" setup>
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
-import { request } from "@/plugin/axios";
 import { readonly, ref, defineEmits, watch, shallowRef, markRaw } from "vue";
+import { forEach, map, isEmpty } from 'lodash';
+import { useStore } from 'vuex';
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
-import { forEach, map, isEmpty } from 'lodash-es';
 
 const emit = defineEmits(['input'])
+const store = useStore();
 const props = defineProps({
   nodeData: {
     type: Object, //(string也可以是其他你自定义的接口)
@@ -56,9 +57,11 @@ let fieldValue = ref();
 const fieldData = readonly(props.nodeData);
 // 装载选项数据
 function loadOptionData() {
-  let url = fieldData.vauleUrl;
-  //todo: 接口请求数据
-  options = fieldData.enum;
+  if (fieldData.vauleUrl) {
+    store.dispatch('fetchOptions', fieldData.vauleUrl)
+  } else {
+    options = fieldData.enum;
+  }
 }
 
 // 装载表格基础数据

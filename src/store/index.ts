@@ -16,6 +16,7 @@ export const store = createStore<State>({
       componentInfo: {},
       nodeGroupLoading: false,
       nodeGroup: [],
+      options: {},
     }
   },
   getters: {
@@ -35,8 +36,8 @@ export const store = createStore<State>({
   mutations: {
     // 初始化获取到集成流json
     initFlowData(state, {routeJson, showRule}) {
-      state.flowOut = JSON.parse(showRule);
-      state.graphJson = JSON.parse(routeJson);
+      state.flowOut = JSON.parse(routeJson);
+      state.graphJson = JSON.parse(showRule);
     },
     // 增加节点
     addProcessor(state, item) {
@@ -157,8 +158,12 @@ export const store = createStore<State>({
     },
     fetchFlow({commit}, payload) {
       FlowRoute.get(payload).then((res: any) => {
-        console.log('---- flow: ', res)
         commit('initFlowData', res.data);
+      })
+    },
+    fetchOptions({commit, state}, valueUrl) {
+      NodeGroup.getOptions(valueUrl).then((res: any) => {
+        console.log('---- getOptions: ', res)
       })
     },
     setProperties({commit}, payload) {
@@ -170,8 +175,8 @@ export const store = createStore<State>({
       console.log('--- save routeJson: ', payload)
       FlowRoute.save({
         nodeId: state.spContext?.nodeId,
-        routeJson: JSON.stringify(payload),
-        showRule: JSON.stringify(state.flowOut)
+        showRule: JSON.stringify(payload),
+        routeJson: JSON.stringify(state.flowOut)
       })
     }
   }

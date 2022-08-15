@@ -51,4 +51,7 @@ export interface State {
   nodeGroup: Group[];
   nodeGroupLoading: boolean;
   graphJson?: any;
+  options?: {
+    [propName: string]: any[]
+  }
 }
