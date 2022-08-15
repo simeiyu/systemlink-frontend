@@ -6,7 +6,7 @@
     <div class="hr"></div>
     <div class="form-box">
       <div class="form-item" v-for="field in formConfig.properties" :key="field.name">
-        <div class="label">{{ field.title }}</div>
+        <div class="label">{{ field.title || node.label }}</div>
         <div class="opt">
           <field-factory :node-data="field" v-model="properties[field.name]" @input="updateProperties"></field-factory>
           <el-button class="set-btn"
@@ -50,7 +50,7 @@
 </template>
 
 <script lang="ts" setup>
-import { watch, ref, defineProps, reactive } from "vue";
+import { watch, ref, defineProps } from "vue";
 import { useStore } from 'vuex';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 import { ActiveNode } from '@/store/type';
@@ -66,7 +66,7 @@ let metaInfo = store.getters.getMetaInfo(props.node.kind);
 let formConfig = ref(metaInfo);
 let properties = ref(store.getters.getProperties(props.node.id, props.node.parentId, props.node.grantId));
 //弹窗展示
-let dialogForm = reactive({});
+let dialogForm = ref({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
 
@@ -77,38 +77,39 @@ function updateProperties({name, value}) {
     [`${name}`]: value
   }
   properties.value = _properties;
-  console.log('--- updateProperties: ', _properties)
   store.dispatch('setProperties', {
     properties: _properties,
     node: props.node
   })
 }
 function updateDialogForm({name, value}) {
-  dialogForm[name] = value;
+  dialogForm.value = {
+    ...dialogForm.value,
+    [`${name}`]: value
+  };
 }
 
 //设置弹窗内容
 function getExtendData(modelData) {
-  console.log('--- getExtendData: ', modelData);
   dialogFormVisible.value = true;
-  dialogForm = {};
+  const _dialogForm = {};
   if (modelData.content) {
     dialogFormConfig.value = modelData.content
     modelData.content.forEach(item => {
-      dialogForm[item.name] = properties[item.name] || '';
+      _dialogForm[item.name] = properties.value[item.name] || '';
     })
   } else {
     dialogFormConfig.value = [modelData];
-    dialogForm[modelData.name] = properties[modelData.name] || '';
+    _dialogForm[modelData.name] = properties.value[modelData.name] || '';
   }
+  dialogForm.value = _dialogForm;
 }
 
 function onSubmit() {
   dialogFormVisible.value = false;
-  console.log('--- submit: ', properties.value, dialogForm);
   const _properties = {
     ...properties.value,
-    ...dialogForm
+    ...dialogForm.value
   }
   properties.value = _properties;
   // emits('update:modelValue', Object.assign(properties, dialogForm));
@@ -118,7 +119,7 @@ function onSubmit() {
   })
 }
 
-watch(() => props.node, (newValue, oldValue) => {
+watch(() => props.node, (newValue) => {
   formConfig.value = store.getters.getMetaInfo(newValue.kind);
   properties.value = store.getters.getProperties(newValue.id, newValue.parentId, newValue.grantId);
 })

@@ -48,7 +48,7 @@ function onToggle () {
 }
 function onAddBranch () {
   const index = node.getChildren().length;  
-  const metaInfo = JSON.parse(node.getData().nodeData.metaInfo);
+  const metaInfo = JSON.parse(node.getData().metaInfo);
   const item = metaInfo.branches.find(item => item.processorType === 'when');
   branch.create(graph, node, index, item);
 }

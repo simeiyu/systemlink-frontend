@@ -8,7 +8,7 @@
           v-for="row in tableConfig"
           :prop="row.name" :label="row.title">
         <template #default="scope">
-          <el-input size="default" v-model="scope.row[row.name]" :placeholder="row.title"></el-input>
+          <el-input size="default" v-model="scope.row[row.name]" :placeholder="row.title" @input="onChange"></el-input>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="100">
@@ -21,8 +21,10 @@
 </template>
 
 <script lang="ts" setup>
-import {ref} from "vue";
+import { ref, defineEmits, reactive } from "vue";
+import { forEach } from "lodash";
 
+const emit = defineEmits(['change']);
 const props = defineProps({
   tableConfig: {
     type: Array, //(string也可以是其他你自定义的接口)
@@ -31,22 +33,29 @@ const props = defineProps({
       return []
     }
   },
+  modelValue: {
+    type: Object,
+    required: false,
+    default: () => ({})
+  }
 });
-let tableConfig = props.tableConfig;
-let row = {};
-tableConfig.forEach((item:any) => {
-    row[item.name] = '';
-});
-let newRow = Object.assign({},row);
-let tableData = ref([row]);
+let tableData = reactive(props.modelValue);
 function addLine() {
-  tableData.value.push(Object.assign({},newRow));
+  const row = {};
+  forEach(props.tableConfig, ({name}) => {
+    row[name] = '';
+  });
+  tableData.push(row);
+  onChange();
 }
 function deleteLine(index,val) {
   console.log(val)
-  tableData.value.splice(index,1);
+  tableData.splice(index,1);
+  onChange();
 }
-
+function onChange() {
+  emit('change', tableData);
+}
 </script>
 <style lang="less" scoped>
 .line-r{

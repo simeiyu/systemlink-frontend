@@ -22,9 +22,10 @@
 <script lang="ts" setup>
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
-import {request} from "@/plugin/axios";
-import {readonly, ref, defineEmits, watch, shallowRef, markRaw} from "vue";
+import { request } from "@/plugin/axios";
+import { readonly, ref, defineEmits, watch, shallowRef, markRaw } from "vue";
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
+import { forEach, map, isEmpty } from 'lodash-es';
 
 const emit = defineEmits(['input'])
 const props = defineProps({
@@ -35,7 +36,7 @@ const props = defineProps({
     }
   },
   modelValue: {
-    type: String, 
+    type: [String, Array], 
     required: true,
     default: () => ''
   }
@@ -51,18 +52,26 @@ const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
 let options = [], tableData = [];
 let type = ref('');
-let fieldValue = ref('');
+let fieldValue = ref();
 const fieldData = readonly(props.nodeData);
-//装载选项数据
+// 装载选项数据
 function loadOptionData() {
   let url = fieldData.vauleUrl;
   //todo: 接口请求数据
   options = fieldData.enum;
 }
 
-//装载表格基础数据
+// 装载表格基础数据
 function loadTableData() {
-
+  let rows: any[] = props.modelValue;
+  if (isEmpty(rows)) {
+    const row = {};
+    forEach(fieldData.table, col => {
+      row[col.name] = '';
+    });
+    rows = [row];
+  }
+  fieldValue.value = rows;
 }
 
 //检查需要的类型
@@ -87,8 +96,8 @@ function change(val) {
   emit('input', {name: fieldData.name, value: val})
 }
 
-watch(() => props.nodeData, (newValue, oldValue) => {
-  console.log(newValue, '---')
+watch(() => props.modelValue, (newValue, oldValue) => {
+  console.log('----', newValue, '---')
 })
 
 </script>

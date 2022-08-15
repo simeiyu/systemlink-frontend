@@ -24,6 +24,8 @@
       <el-button icon="Promotion" text circle size="large"/>
       <!-- 清理 -->
       <el-button icon="Briefcase" text circle size="large"/>
+      <!-- 保存 -->
+      <el-button round @click="onSave">保存</el-button>
     </div>
   </div>
   <div class="flow-center">
@@ -258,7 +260,7 @@ function initEditor() {
   })
   // 点击画布中的节点
   graph.on('node:click', ({node}) => {
-    const item = {id: node.id, kind: get(node, 'data.kind'), parentId: node.getParentId()};
+    const item = {id: node.id, label: get(node, 'data.description'), kind: get(node, 'data.kind'), parentId: node.getParentId()};
     if (item.parentId) {
       item.grantId = node.parent?.getParentId();
     }
@@ -285,8 +287,9 @@ function initEditor() {
     ) as NodeListOf<SVGElement>
     showPorts(ports, false)
   })
-  graph.on('node:embedded', ({node, currentParent}) => {
+  graph.on('node:embedded', ({node, currentParent, previousParent}) => {
     if (currentParent && currentParent.isNode()) {
+      store.commit('updateProcessor', {nodeId: node.id, parentId: currentParent.id, prevParentId: previousParent?.id});
       let originSize = currentParent.prop('originSize')
       if (originSize == null) {
         currentParent.prop('originSize', currentParent.getSize())
@@ -346,8 +349,9 @@ function initEditor() {
       }
     }
   })
-  graph.on('node:added', ({node}) => {
+  graph.on('node:added', ({node, index, options}) => {
     const kind = get(node, 'data.kind');
+    if (kind === 'when') return;
     const processor: Processor = {
       processorId: node.id,
       kind: kind,
@@ -398,6 +402,7 @@ function dropNode(evt: any, nodeData: any) {
       });
       break;
     case 'choice':
+      const component = store.state.componentInfo[processorType];
       node = graph.createNode({
         ports: {...ports},
         shape: 'vue-shape',
@@ -407,6 +412,7 @@ function dropNode(evt: any, nodeData: any) {
         zIndex: -1,
         data: {
           kind: processorType,
+          metaInfo: component && component.metaInfo
         }
       });
       break;
@@ -436,12 +442,13 @@ function onUndo() {
   graph.history.undo();
 }
 
-// watch(store.state.graphJson, () => {
-//   console.log('--- watch Effect')
-// })
+function onSave() {
+  const graphJson = graph.toJSON();
+  store.dispatch('saveFlow', graphJson)
+}
 
 watchEffect(() => {
-  console.log('--- watch Effect')
+  console.log('--- watch Effect', graph, store.state.graphJson)
   graph && graph.fromJSON(store.state.graphJson)
 })
 
@@ -451,6 +458,7 @@ onMounted(() => {
   store.dispatch('fetchContext');
   const data = store.state.graphJson;
   if (data) {
+  console.log('--- onMounted')
     graph.fromJSON(data);
   }
 })
