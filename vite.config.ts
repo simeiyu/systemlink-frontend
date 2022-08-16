@@ -53,6 +53,12 @@ export default defineConfig({
                 changeOrigin: true,
                 // rewrite: (path) => path.replace(/^\/api/, ""),
             },
+            "/integration": {
+                target: "http://sp7.iamzju.com:30080/",
+                // target: " http://192.168.10.65:8080/",
+                changeOrigin: true,
+                // rewrite: (path) => path.replace(/^\/api/, ""),
+            },
             '/sp': {
               changeOrigin: true,
               target: 'http://localhost:3002/'

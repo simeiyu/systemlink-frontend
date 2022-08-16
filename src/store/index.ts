@@ -14,7 +14,10 @@ export const store = createStore<State>({
         externalDataSource: []
       },
       componentInfo: {},
-      nodeGroupLoading: false,
+      loading: {
+        nodeGroup: false,
+        options: false,
+      },
       nodeGroup: [],
       options: {},
     }
@@ -101,8 +104,8 @@ export const store = createStore<State>({
         if (processor) processor.properties = JSON.parse(JSON.stringify(properties));
       });
     },
-    setNodeGroupLoading(state, loading) {
-      state.nodeGroupLoading = loading;
+    setLoading(state, {key, loading}) {
+      state.loading[key] = loading;
     },
     setNodeGroup(state, data) {
       state.nodeGroup = data;
@@ -112,11 +115,14 @@ export const store = createStore<State>({
     },
     setContext(state, payload) {
       state.spContext = payload;
+    },
+    setOptions(state, {path, data}) {
+      state.options[path] = data;
     }
   },
   actions: {
     fetchComponents({commit}) {
-      commit('setNodeGroupLoading', true);
+      commit('setLoading', {key: 'nodeGroup', loading: true});
       commit('setNodeGroup', []);
       NodeGroup.getGroupList({}).then((res: any) => {
         const componentInfo = {};
@@ -147,7 +153,7 @@ export const store = createStore<State>({
         commit('setNodeGroup', nodeGroup);
         commit('setComponentInfo', componentInfo);
       }).finally(() => {
-        commit('setNodeGroupLoading', false);
+        commit('setLoading', {key: 'nodeGroup', loading: false});
       })
     },
     fetchContext({commit, dispatch}) {
@@ -162,8 +168,15 @@ export const store = createStore<State>({
       })
     },
     fetchOptions({commit, state}, valueUrl) {
+      commit('setLoading', {key: 'options', loading: true});
       NodeGroup.getOptions(valueUrl).then((res: any) => {
         console.log('---- getOptions: ', res)
+        commit('setOptions', {
+          path: valueUrl,
+          data: res.data
+        })
+      }).finally(() => {
+        commit('setLoading', {key: 'options', loading: false});
       })
     },
     setProperties({commit}, payload) {

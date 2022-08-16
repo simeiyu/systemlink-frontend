@@ -49,9 +49,9 @@ export interface State {
   flowOut: FlowOut;
   componentInfo: any;
   nodeGroup: Group[];
-  nodeGroupLoading: boolean;
+  loading: {[propName: string]: boolean};
   graphJson?: any;
-  options?: {
+  options: {
     [propName: string]: any[]
-  }
+  };
 }

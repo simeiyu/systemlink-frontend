@@ -8,7 +8,7 @@
       <div class="form-item" v-for="field in formConfig.properties" :key="field.name">
         <div class="label">{{ field.title || node.label }}</div>
         <div class="opt">
-          <field-factory :node-data="field" v-model="properties[field.name]" @input="updateProperties"></field-factory>
+          <field-factory :node-data="field" v-model="properties[field.name]" @input="updateProperties" :getFormatUrl="getFormatUrl"></field-factory>
           <el-button class="set-btn"
                      size="default"
                      type="primary"
@@ -28,7 +28,7 @@
           <template
               v-if="field.extend&&field.extend[properties[field.name]]&&field.extend[properties[field.name]].position==='default'">
             <div class="opt" v-for="iField in field.extend[properties[field.name]].content">
-              <field-factory :node-data="iField" :key="iField.name" v-model="properties[iField.name]" @input="updateProperties"></field-factory>
+              <field-factory :node-data="iField" :key="iField.name" v-model="properties[iField.name]" @input="updateProperties" :getFormatUrl="getFormatUrl"></field-factory>
             </div>
           </template>
         </template>
@@ -39,7 +39,7 @@
   <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close>
     <el-form :model="dialogForm" class="dia-form" label-width="120px">
       <el-form-item v-for="field in dialogFormConfig" :label="field.title">
-        <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm"></field-factory>
+        <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
       </el-form-item>
     </el-form>
     <template #footer>
@@ -52,8 +52,10 @@
 <script lang="ts" setup>
 import { watch, ref, defineProps } from "vue";
 import { useStore } from 'vuex';
+import { has, map } from 'lodash';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 import { ActiveNode } from '@/store/type';
+import { ElMessage } from "element-plus";
 
 const store = useStore();
 
@@ -117,6 +119,27 @@ function onSubmit() {
     properties: _properties,
     node: props.node
   })
+}
+
+function getFormatUrl(str) {
+  const { appId } = store.state.spContext
+  const arr = map(str.split('&'), (item, index) => {
+    let i = 0;
+    if (!index && item.indexOf('(?)') > -1) {
+      i = item.replace('(?)', '').lastIndexOf('?') + 1;
+    } 
+    const query = item.slice(i).split('=');
+    const key = query[0];
+    if (key === 'appId') {
+      return item.replace(`${key}=(?)`, `${key}=${appId}`)
+    } else if (has(properties.value, key)) {
+      return item.replace(`${key}=(?)`, `${key}=${properties.value[key]}`)
+    } else if (query[1] === '(?)') {
+      ElMessage.error(`未读取到"${key}"`);
+    }
+    return item;
+  });
+  return arr.join('&');
 }
 
 watch(() => props.node, (newValue) => {

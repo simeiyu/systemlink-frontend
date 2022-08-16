@@ -2,13 +2,17 @@
   <component
       :is="type"
       show-time
-      :multiple="fieldData.multiple"
-      :required="fieldData.required"
-      :tableConfig="fieldData.table"
+      :multiple="nodeData.multiple"
+      :required="nodeData.required"
+      :tableConfig="nodeData.table"
       @change="change"
       v-model="fieldValue"
       :value-format="dateFormat"
-      :placeholder="fieldData.title">
+      :placeholder="nodeData.title"
+      @visible-change="onVisibleChange"
+      :no-data-text="'暂无数据'"
+      :loading="loading"
+    >
     <el-option
         v-if="type==='el-select'"
         v-for="item in options"
@@ -22,8 +26,8 @@
 <script lang="ts" setup>
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
-import { readonly, ref, defineEmits, watch, shallowRef, markRaw } from "vue";
-import { forEach, map, isEmpty } from 'lodash';
+import { readonly, ref, defineEmits, watch, computed, markRaw } from "vue";
+import { forEach, isEmpty } from 'lodash';
 import { useStore } from 'vuex';
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
 
@@ -40,6 +44,9 @@ const props = defineProps({
     type: [String, Array], 
     required: true,
     default: () => ''
+  },
+  getFormatUrl: {
+    type: Function
   }
 });
 const fieldMap = {
@@ -51,16 +58,17 @@ const fieldMap = {
 }
 const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
-let options = [], tableData = [];
+let options = ref([]);
 let type = ref('');
 let fieldValue = ref();
-const fieldData = readonly(props.nodeData);
+let optionKey = ref('');
+let loading = computed<boolean>(() => store.state.loading.options);
 // 装载选项数据
 function loadOptionData() {
-  if (fieldData.vauleUrl) {
-    store.dispatch('fetchOptions', fieldData.vauleUrl)
+  if (props.getFormatUrl && props.nodeData.vauleUrl) {
+    optionKey.value = props.getFormatUrl(props.nodeData.vauleUrl);
   } else {
-    options = fieldData.enum;
+    options.value = props.nodeData.enum;
   }
 }
 
@@ -69,7 +77,7 @@ function loadTableData() {
   let rows: any[] = props.modelValue;
   if (isEmpty(rows)) {
     const row = {};
-    forEach(fieldData.table, col => {
+    forEach(props.nodeData.table, col => {
       row[col.name] = '';
     });
     rows = [row];
@@ -79,10 +87,9 @@ function loadTableData() {
 
 //检查需要的类型
 function checkData() {
-  type.value = fieldMap[fieldData.form];
+  type.value = fieldMap[props.nodeData.form];
   fieldValue.value = props.modelValue;
-  console.log('--- field: ', fieldData.name, props.modelValue)
-  switch (fieldData.form) {
+  switch (props.nodeData.form) {
     case 'select':
       loadOptionData();
       break;
@@ -95,12 +102,28 @@ function checkData() {
 checkData();
 
 function change(val) {
-  console.log('---change: ', val)
-  emit('input', {name: fieldData.name, value: val})
+  emit('input', {name: props.nodeData.name, value: val})
 }
 
-watch(() => props.modelValue, (newValue, oldValue) => {
-  console.log('----', newValue, '---')
+function onVisibleChange(visible) {
+  if (visible && props.nodeData.form === 'select' && props.nodeData.vauleUrl) {
+    if (store.state.options[optionKey.value]) {
+      options.value = store.state.options[optionKey.value];
+    } else {
+      const url = props.getFormatUrl && props.getFormatUrl(props.nodeData.vauleUrl);
+      optionKey.value = url;
+      store.dispatch('fetchOptions', url);
+    }
+  }
+}
+
+watch(() => store.state.loading.options, (newValue, oldValue) => {
+  if (props.nodeData.form === 'select' && oldValue && !newValue) {
+    options.value = store.state.options[optionKey.value] || [];
+  }
+})
+watch(() => props.nodeData, (newValue, oldValue) => {
+  checkData();
 })
 
 </script>

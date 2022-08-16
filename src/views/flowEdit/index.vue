@@ -89,7 +89,7 @@ const activeName = ref('组件栏');
 let curActive = ref(0);
 let nodeGroup = computed(() => store.state.nodeGroup);
 let activeNode:Ref<ActiveNode> = ref();
-let loading = computed<boolean>(() => store.state.nodeGroupLoading);
+let loading = computed<boolean>(() => store.state.loading.nodeGroup);
 let canRedo = ref(true);
 let canUndo = ref(true);
 
