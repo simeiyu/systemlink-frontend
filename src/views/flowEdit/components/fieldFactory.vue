@@ -65,8 +65,8 @@ let optionKey = ref('');
 let loading = computed<boolean>(() => store.state.loading.options);
 // 装载选项数据
 function loadOptionData() {
-  if (props.getFormatUrl && props.nodeData.vauleUrl) {
-    optionKey.value = props.getFormatUrl(props.nodeData.vauleUrl);
+  if (props.getFormatUrl && props.nodeData.valueUrl) {
+    optionKey.value = props.getFormatUrl(props.nodeData.valueUrl);
   } else {
     options.value = props.nodeData.enum;
   }
@@ -106,11 +106,11 @@ function change(val) {
 }
 
 function onVisibleChange(visible) {
-  if (visible && props.nodeData.form === 'select' && props.nodeData.vauleUrl) {
+  if (visible && props.nodeData.form === 'select' && props.nodeData.valueUrl) {
     if (store.state.options[optionKey.value]) {
       options.value = store.state.options[optionKey.value];
     } else {
-      const url = props.getFormatUrl && props.getFormatUrl(props.nodeData.vauleUrl);
+      const url = props.getFormatUrl && props.getFormatUrl(props.nodeData.valueUrl);
       optionKey.value = url;
       store.dispatch('fetchOptions', url);
     }

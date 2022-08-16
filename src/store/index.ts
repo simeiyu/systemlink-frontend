@@ -1,3 +1,4 @@
+import { Transform } from './../api/api';
 import { createStore } from 'vuex';
 import { NodeGroup, FlowRoute, Suanpan } from '@/api/api';
 import { map, find, get, forEach, remove, isEmpty } from 'lodash';
@@ -121,6 +122,7 @@ export const store = createStore<State>({
     }
   },
   actions: {
+    // 获取组件列表（元数据）
     fetchComponents({commit}) {
       commit('setLoading', {key: 'nodeGroup', loading: true});
       commit('setNodeGroup', []);
@@ -156,17 +158,20 @@ export const store = createStore<State>({
         commit('setLoading', {key: 'nodeGroup', loading: false});
       })
     },
+    // 请求环境变量（appId, userId, nodeId, componentId)
     fetchContext({commit, dispatch}) {
       Suanpan.getContext().then((res: any) => {
         commit('setContext', res.data);
         dispatch('fetchFlow', res.data.nodeId);
       })
     },
+    // 请求画布数据（flowOut， graphJson）
     fetchFlow({commit}, payload) {
       FlowRoute.get(payload).then((res: any) => {
         commit('initFlowData', res.data);
       })
     },
+    // 请求valueUrl的下拉列表，保存到state.options
     fetchOptions({commit, state}, valueUrl) {
       commit('setLoading', {key: 'options', loading: true});
       NodeGroup.getOptions(valueUrl).then((res: any) => {
@@ -179,9 +184,11 @@ export const store = createStore<State>({
         commit('setLoading', {key: 'options', loading: false});
       })
     },
+    // 更新节点的properties
     setProperties({commit}, payload) {
       commit('setProcessorProperties', payload)
     },
+    // 保存画布数据（flowOut、graphJson）
     saveFlow({commit, state}, payload) {
       console.log('--- save context: ', state.spContext)
       console.log('--- save showRule: ', state.flowOut)
@@ -190,6 +197,12 @@ export const store = createStore<State>({
         nodeId: state.spContext?.nodeId,
         showRule: JSON.stringify(payload),
         routeJson: JSON.stringify(state.flowOut)
+      })
+    },
+    // 请求转换方法列表
+    fetchTransformList() {
+      Transform.getList().then((res: any) => {
+        console.log('--- transform list: ', res)
       })
     }
   }

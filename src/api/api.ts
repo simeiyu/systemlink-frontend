@@ -40,6 +40,19 @@ export class FlowRoute {
   }
 }
 
+/**
+ * transform 转换方法
+ */
+export class Transform {
+  /**
+   * @description 转换方法列表
+   * @returns {Request} result
+   */
+  static async getList() {
+    return request('systemlink/transformMeta/list')
+  }
+}
+
 export class Suanpan {
   static async getContext() {
     return request('/sp/context/get')
