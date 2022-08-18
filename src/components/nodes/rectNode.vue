@@ -31,8 +31,8 @@ export default {
       if (props.onMap) {
         let getNode = inject<any>('getNode');
         let node = getNode();
-        let { description, icon } = node.data;
-        mapLabel.value = description;
+        let { name, icon } = node.data;
+        mapLabel.value = name;
         mapIcon.value = icon;
       }
     })

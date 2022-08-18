@@ -1,8 +1,9 @@
 import { Transform } from './../api/api';
 import { createStore } from 'vuex';
-import { NodeGroup, FlowRoute, Suanpan } from '@/api/api';
+import { NodeGroup, FlowRoute, Suanpan, ProcessorInstance } from '@/api/api';
 import { map, find, get, forEach, remove, filter, isEmpty } from 'lodash';
 import { State } from './type';
+import { v4 as uuidv4 } from 'uuid';
 
 export const store = createStore<State>({
   state() {
@@ -141,6 +142,29 @@ export const store = createStore<State>({
         return item
       })
       console.log(' tranform: ', state.transform.list)
+    },
+    // 新增或编辑Transform
+    setTransform(state, {visible, transformId, processorId}) {
+      state.transform.visible = visible;
+      if (visible) {
+        state.transform.edit = transformId ? find(state.flowOut.transforms, {transformId}) : {
+          transformId: uuidv4(),
+          processorId: processorId,
+          properties: {},
+          output: {}
+        }
+      } else {
+        state.transform.edit = null;
+      }
+    },
+    // 将编辑后的Transform更新到flowOut
+    updateTransforms(state, transform) {
+      const index = state.flowOut.transforms.findIndex(item => item.transformId === item.transformId);
+      if (index > -1) {
+        state.flowOut.transforms[index] = transform;
+      } else {
+        state.flowOut.transforms.push(transform);
+      }
     }
   },
   actions: {
@@ -174,6 +198,7 @@ export const store = createStore<State>({
             processorMetaVOList: children
           }
         });
+        console.log('--- componentInfo: ', componentInfo)
         commit('setNodeGroup', nodeGroup);
         commit('setComponentInfo', componentInfo);
       }).finally(() => {
@@ -224,6 +249,12 @@ export const store = createStore<State>({
     fetchTransformList({commit}) {
       Transform.getList().then((res: any) => {
         commit('setTransformList', res.data);
+      })
+    },
+    // 查询前序节点的输出数据
+    fetchUpstream({commit}, payload) {
+      ProcessorInstance.getUpstream(payload).then(res => {
+        console.log('--- upstream: ', res)
       })
     }
   }

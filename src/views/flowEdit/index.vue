@@ -23,7 +23,7 @@
       <!-- 发布 -->
       <el-button icon="Promotion" text circle size="large"/>
       <!-- 清理 -->
-      <el-button icon="Briefcase" text circle size="large"/>
+      <el-button icon="Briefcase" text circle size="large" @click="clearCells" />
       <!-- 保存 -->
       <el-button round @click="onSave">保存</el-button>
     </div>
@@ -66,6 +66,7 @@
       </el-tabs>
     </div>
   </div>
+  <transform />
 </template>
 
 <script lang="ts" setup>
@@ -77,6 +78,7 @@ import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
 import choiceNode from "@/components/nodes/choiceNode.vue"
 import loopNode from "@/components/nodes/loopNode.vue"
+import transform from '@/components/transform.vue';
 import branch from "@/utils/choice/branch";
 import formRender from './components/formRender.vue'
 import { ActiveNode, Processor } from '@/store/type';
@@ -141,7 +143,7 @@ function initEditor() {
     history: true,  // 撤销、重做
     autoResize: true,
     keyboard: {   // 键盘快捷键
-      enabled: true,
+      enabled: true
     },
     mousewheel: {
       enabled: true,
@@ -239,6 +241,7 @@ function initEditor() {
       // }
     },
     snapline: true,
+    clipboard: true,
   });
   provide('graph', graph);
   dnd = new Addon.Dnd({
@@ -361,6 +364,7 @@ function initEditor() {
       properties: {},
       output: ''
     }
+    console.log('--- node: ', node)
     if (node["component" as keyof typeof node] === "choiceNode") {
       //元数据解析
       processor.processors = [];
@@ -392,6 +396,7 @@ function dropNode(evt: any, nodeData: any) {
   let node: Node | undefined;
   //判断节点类型 实现不同类型的节点添加到画布
   const { processorType, name, icon } = nodeData;
+  console.log('--- nodeData: ', nodeData)
   switch (processorType) {
     case 'loop':
       node = graph.createNode({
@@ -449,6 +454,10 @@ function onUndo() {
 
 function onSave() {
   store.dispatch('saveFlow', graph.toJSON())
+}
+
+function clearCells() {
+  graph.clearCells();
 }
 
 watchEffect(() => {

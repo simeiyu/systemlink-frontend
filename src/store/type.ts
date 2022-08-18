@@ -18,8 +18,8 @@ export interface Processor {
 export interface Transformer {
   transformId: string;
   processorId: string;
-  properties: any;
-  output: any;
+  properties: any[];
+  output: {};
 }
 
 export interface FlowOut {

@@ -60,6 +60,5 @@ function onChange() {
 <style lang="less" scoped>
 .line-r{
   text-align: right;
-  margin: 10px 0 0;
 }
 </style>

@@ -53,6 +53,15 @@ export class Transform {
   }
 }
 
+/**
+ * 画布节点详情
+ */
+export class ProcessorInstance {
+  static async getUpstream(id) {
+    return request('/systemlink/processorInstance/findParent', {processorId: id})
+  }
+}
+
 export class Suanpan {
   static async getContext() {
     return request('/sp/context/get')

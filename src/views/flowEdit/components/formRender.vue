@@ -39,8 +39,8 @@
   <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%">
     <div class="dia-content">
       <Inputs types="properties,transforms" :node="node" />
-      <el-form :model="dialogForm" class="dia-form" label-width="120px">
-        <el-form-item v-for="field in dialogFormConfig" :label="field.title">
+      <el-form :model="dialogForm" class="dia-form">
+        <el-form-item v-for="field in dialogFormConfig">
           <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
         </el-form-item>
       </el-form>
@@ -193,8 +193,7 @@ watch(() => props.node, (newValue) => {
 .dia-form {
   flex: 1 1 60%;
   margin-left: -1px;
-  padding-top: 20px;
-  padding-right: 20px;
+  padding: 20px 20px 0 20px;
   border: 1px solid  var(--el-border-color-lighter);
   * {
     user-select: none !important;
