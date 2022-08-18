@@ -237,7 +237,7 @@ export const store = createStore<State>({
     },
     // 保存画布数据（flowOut、graphJson）
     saveFlow({commit, state}, payload) {
-      console.log('--- save showRule: ', payload)
+      console.log('--- save routeJson: ', state.flowOut)
       commit('setGraphJson', payload);
       FlowRoute.save({
         nodeId: state.spContext?.nodeId,

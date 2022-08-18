@@ -16,7 +16,7 @@
       </el-form-item>
     </el-space>
     <div class="sys-transform-wrapper">
-      <Inputs types="properties" />
+      <Inputs types="properties" @selectExpression="onSelectExpression" />
       <div class="sys-transform-metaInfo">
         <el-form v-if="metaInfo" :model="transform.properties">
           <el-form-item v-for="prop in metaInfo.properties" :key="prop.name" :label="prop.title">
@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, h, watchEffect, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useStore } from 'vuex';
 import { ElDivider } from 'element-plus'
 import { find } from 'lodash'
@@ -58,6 +58,8 @@ let transform = ref<Transform>({});
 let list = computed(() => store.state.transform.list);
 // 选择类型后的元数据
 let metaInfo = ref<MetaInfo | null>()
+// 处于焦点中的输入框
+let focusInputName = ref('')
 
 watch(() => store.state.transform.edit, (value) => {
   if (value) {
@@ -81,6 +83,10 @@ function onTypeChange(val) {
 
 function updateProperties({name, value}) {
   transform.value.properties[name] = value;
+}
+
+function onSelectExpression(exp: string) {
+
 }
 
 function onSubmit() {

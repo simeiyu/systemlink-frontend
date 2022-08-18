@@ -1,38 +1,40 @@
 <template>
   <div class="sys-inputs-wrapper">
     <h4 class="sys-inputs-title">输入数据</h4>
-    <el-tree
-      class="sys-inputs"
-      node-key="id"
-      :data="data"
-      :props="TreeProps"
-      :load="loadNode"
-      @node-click="handleNodeClick"
-      @node-expand="handleExpand"
-      accordion
-      lazy
-    >
-    <template #default="{ node, data }">
-      <span :class="{'sys-tree-node': !!data.action}">
-        <span>{{ node.label }}</span>
-        <el-button v-if="data.action" type="primary" @click.stop="data.action.click(node, data)" :icon="data.action.icon" circle text></el-button>
-      </span>
-    </template>
-    </el-tree>
+    <el-scrollbar height="320px" class="sys-inputs">
+      <el-tree
+        node-key="id"
+        :data="data"
+        :props="TreeProps"
+        :load="loadNode"
+        @node-click="handleNodeClick"
+        @node-expand="handleExpand"
+        lazy
+      >
+        <template #default="{ node, data }">
+          <span :class="{'sys-tree-node': !!data.action}">
+            <span>{{ node.label }}</span>
+            <span v-if="data.type" class="sys-tree-node-type">{{ data.type }}</span>
+            <el-button v-if="data.action" class="sys-tree-node-action" type="primary" @click.stop="data.action.click(node, data)" :icon="data.action.icon" circle text></el-button>
+          </span>
+        </template>
+      </el-tree>
+    </el-scrollbar>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, defineProps, inject, reactive } from 'vue'
+import { ref, defineProps, inject, reactive, defineEmits } from 'vue'
 import { useStore } from 'vuex'
-import { compact, filter, isEmpty, map, sortedUniq, find, forEach } from 'lodash'
+import { compact, filter, isEmpty, map, sortedUniq } from 'lodash'
 import { Graph } from '@antv/x6'
 import type Node from 'element-plus/es/components/tree/src/model/node'
 import { ProcessorInstance } from '@/api/api'
 
 const store = useStore();
 const activeNode = inject('activeNode');
-const graph: Graph = inject('graph');
+const graph = inject('graph');
+const emits = defineEmits(['selectExpression'])
 
 let props = defineProps({
   types: {
@@ -174,11 +176,14 @@ function openTransform (node, data) {
   const transformId = data.id !== '222' ? data.id : null;
   store.commit('setTransform', {visible: true, transformId, processorId: activeNode.value.id})
 }
-function handleNodeClick (node: Node) {
+function handleNodeClick (node: Tree) {
   console.log('--- click: ', node)
+  if (node.expression) {
+    emits('selectExpression', node.expression)
+  }
 }
 function handleExpand (data: Tree) {
-  console.log('--- expand: ', data)
+  // console.log('--- expand: ', data)
 }
 const TreeProps = {
   children: 'children',
@@ -200,7 +205,7 @@ const TreeProps = {
       color: #1C2126;
       font-weight: bold;
       border-left: 2px solid var(--el-color-primary);
-      border-bottom: 1px solid var(--el-border-color-extra-light);
+      border-bottom: 1px solid var(--el-border-color-light);
       background-color: var(--el-fill-color-lighter);
     }
   }
@@ -210,5 +215,15 @@ const TreeProps = {
     justify-content: space-between;
     align-items: center;
     padding-right: 8px;
+    &-type {
+      display: inline-block;
+      margin-left: 12px;
+      padding: 0 5px;
+      border-radius: 5px;
+      // background-color: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      font-size: 12px;
+      color: var(--el-color-info);
+    }
   }
 </style>

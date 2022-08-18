@@ -39,11 +39,26 @@
   <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%">
     <div class="dia-content">
       <Inputs types="properties,transforms" :node="node" />
-      <el-form :model="dialogForm" class="dia-form">
+      <!-- <el-form :model="dialogForm" class="dia-form">
         <el-form-item v-for="field in dialogFormConfig">
           <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
         </el-form-item>
-      </el-form>
+      </el-form> -->
+      <div class="dia-form">
+        <div class="form-line" v-for="field in dialogFormConfig">
+          <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
+          <field-factory
+            v-for="subField in field.extend[properties[field.name]].content"
+            v-if="properties[field.name]&&field.extend"
+            :key="subField.name"
+            :node-data="subField"
+            v-model="dialogForm[subField.name]"
+            @input="updateDialogForm" :getFormatUrl="getFormatUrl"
+          >
+          </field-factory>
+        </div>
+      </div>
+
     </div>
     <template #footer>
       <el-button @click="dialogFormVisible = false">取 消</el-button>
@@ -109,6 +124,7 @@ function getExtendData(modelData) {
     _dialogForm[modelData.name] = properties.value[modelData.name] || '';
   }
   dialogForm.value = _dialogForm;
+  console.log('--- dialogFormConfig: ', dialogFormConfig.value)
 }
 
 function onSubmit() {
@@ -193,14 +209,14 @@ watch(() => props.node, (newValue) => {
 .dia-form {
   flex: 1 1 60%;
   margin-left: -1px;
-  padding: 20px 20px 0 20px;
+  // padding: 20px 20px 0 20px;
   border: 1px solid  var(--el-border-color-lighter);
   * {
     user-select: none !important;
 
   }
   .form-line {
-    margin: 0 20px;
+    margin: 20px;
 
     div {
       margin: 0 5px;
