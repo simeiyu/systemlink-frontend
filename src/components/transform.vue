@@ -16,11 +16,11 @@
       </el-form-item>
     </el-space>
     <div class="sys-transform-wrapper">
-      <Inputs types="properties" @selectExpression="onSelectExpression" />
+      <Inputs @selectExpression="onSelectExpression" />
       <div class="sys-transform-metaInfo">
         <el-form v-if="metaInfo" :model="transform.properties">
           <el-form-item v-for="prop in metaInfo.properties" :key="prop.name" :label="prop.title">
-            <field-factory :node-data="prop" v-model="transform.properties[prop.name]" @input="updateProperties" />
+            <field-factory :node-data="prop" v-model="transform.properties[prop.name]" @input="updateProperties" :focus="onFocus" />
           </el-form-item>
         </el-form>
       </div>
@@ -85,8 +85,14 @@ function updateProperties({name, value}) {
   transform.value.properties[name] = value;
 }
 
-function onSelectExpression(exp: string) {
+function onFocus(name) {
+  focusInputName.value = name;
+}
 
+function onSelectExpression(exp: string) {
+  if (focusInputName.value) {
+    transform.value.properties[focusInputName.value] = exp;
+  }
 }
 
 function onSubmit() {

@@ -3,6 +3,7 @@
     <h4 class="sys-inputs-title">输入数据</h4>
     <el-scrollbar height="320px" class="sys-inputs">
       <el-tree
+        ref="treeRef"
         node-key="id"
         :data="data"
         :props="TreeProps"
@@ -24,25 +25,17 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, defineProps, inject, reactive, defineEmits } from 'vue'
+import { ref, watch, inject, reactive, defineEmits } from 'vue'
 import { useStore } from 'vuex'
-import { compact, filter, isEmpty, map, sortedUniq } from 'lodash'
-import { Graph } from '@antv/x6'
+import { isEmpty, map } from 'lodash'
+import { ElTree } from 'element-plus'
 import type Node from 'element-plus/es/components/tree/src/model/node'
 import { ProcessorInstance } from '@/api/api'
 
 const store = useStore();
 const activeNode = inject('activeNode');
-const graph = inject('graph');
 const emits = defineEmits(['selectExpression'])
 
-let props = defineProps({
-  types: {
-    type: String,
-    required: true,
-    default: () => 'properties,transforms'
-  }
-})
 interface Tree {
   id: string;
   label: string;
@@ -53,29 +46,11 @@ interface Tree {
   type?: string;
 }
 let data = reactive<Tree[]>([]);
-let nodes:string[] = [];
 
-function getUpstreamNodeId(edges, ids, box) {
-  const upstreams = filter(edges, edge => ids.includes(edge.target.cell)).map(edge => edge.source.cell);
-  const nodeIds = sortedUniq(compact(upstreams));
-  if (!isEmpty(nodeIds)) {
-    box.push(...nodeIds);
-    getUpstreamNodeId(edges, nodeIds, box);
-  }
-}
+const treeRef = ref<InstanceType<typeof ElTree>>()
 
-// 获取上游节点
-function getNodes() {
-  if (!graph || !activeNode) return null;
-  const edges = graph.getEdges();
-  const { id, parentId, grantId } = activeNode.value;
-  const _nodes = compact([id, parentId, grantId]);
-  getUpstreamNodeId(edges, _nodes, _nodes);
-  return _nodes;
-}
-
-function getTransformChildren() {
-  return map(store.getters.getInputTransforms(nodes), item => ({
+function getTransformChildren(id) {
+  return map(store.getters.getInputTransforms(id), item => ({
       id: item.transformId,
       label: item.properties.name,
       action: {
@@ -87,38 +62,26 @@ function getTransformChildren() {
     }))
 }
 
-function getTreeData(types) {
+function getTreeData() {
   const data: Tree[] = [];
-  nodes = getNodes();
-  if (types.indexOf('properties') > -1) {
-    // 项目参数
-    data.push({
-      id: '111',
-      label: '项目参数',
-      children: [],
-    })
-  }
-  if (types.indexOf('transforms') > -1) {
-    const children = getTransformChildren()
-    data.push({
-      id: '222',
-      label: '数据转换',
-      action: {
-        icon: 'Plus',
-        click: openTransform
-      },
-      children,
-    })
-  }
+  // 项目参数
   data.push({
-    id: '333',
-    label: '前序节点',
+    id: '111',
+    label: '项目参数',
     children: [],
+  })
+  // 数据转换
+  data.push({
+    id: '222',
+    label: '数据转换',
+    action: {
+      icon: 'Plus',
+      click: openTransform
+    },
+    children: getTransformChildren(activeNode.value.id),
   })
   return data;
 }
-
-data = getTreeData(props.types);
 
 function getUpstream(list) {
   if (isEmpty(list)) return [];
@@ -153,17 +116,15 @@ function getUpstream(list) {
 
 const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
   if (node.level === 0) {
-    const rootTree = getTreeData(props.types);
-    return resolve(rootTree)
-  } else if (node.data.id == '222') {
-    const children = getTransformChildren();
-    return resolve(children);
-  } else if (node.data.id == '333') {
+    const rootTree = getTreeData();
     ProcessorInstance.getUpstream(6).then((res: any) => {
-      console.log('---upstream: ', res)
       const upstream = res ? getUpstream(res.data) : [];
-      resolve(upstream)
+      rootTree.push(...upstream);
+      resolve(rootTree)
     })
+  } else if (node.data.id === '222') {
+    const currentTransforms = getTransformChildren(activeNode.value.id);
+    return resolve(currentTransforms);
   } else if (node.data.children) {
     return resolve(node.data.children)
   } else {
@@ -172,7 +133,6 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
 }
 
 function openTransform (node, data) {
-  console.log('transform opened: ', node, data)
   const transformId = data.id !== '222' ? data.id : null;
   store.commit('setTransform', {visible: true, transformId, processorId: activeNode.value.id})
 }
@@ -185,6 +145,9 @@ function handleNodeClick (node: Tree) {
 function handleExpand (data: Tree) {
   // console.log('--- expand: ', data)
 }
+watch(() => store.state.flowOut.transforms, () => {
+
+})
 const TreeProps = {
   children: 'children',
   label: 'label',

@@ -40,9 +40,9 @@ export const store = createStore<State>({
       const metaInfo = get(state.componentInfo, `${kind}.metaInfo`, '');
       return typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo);
     },
-    getInputTransforms: (state) => (nodes) => {
-      if (isEmpty(nodes)) return []
-      return filter(state.flowOut.transforms, item => nodes.includes(item.processorId))
+    getInputTransforms: (state) => (processorId) => {
+      if (isEmpty(processorId)) return []
+      return filter(state.flowOut.transforms, item => item.processorId === processorId)
     }
   },
   mutations: {
@@ -159,7 +159,7 @@ export const store = createStore<State>({
     },
     // 将编辑后的Transform更新到flowOut
     updateTransforms(state, transform) {
-      const index = state.flowOut.transforms.findIndex(item => item.transformId === item.transformId);
+      const index = state.flowOut.transforms.findIndex(item => item.transformId === transform.transformId);
       if (index > -1) {
         state.flowOut.transforms[index] = transform;
       } else {

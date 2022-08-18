@@ -12,6 +12,7 @@
       @visible-change="onVisibleChange"
       :no-data-text="'暂无数据'"
       :loading="loading"
+      @focus="onFocus"
     >
     <el-option
         v-if="type==='el-select'"
@@ -47,7 +48,8 @@ const props = defineProps({
   },
   getFormatUrl: {
     type: Function
-  }
+  },
+  focus: Function
 });
 const fieldMap = {
   select: 'el-select',
@@ -104,6 +106,9 @@ checkData();
 function change(val) {
   emit('input', {name: props.nodeData.name, value: val})
 }
+function onFocus() {
+  if (props.focus) props.focus(props.nodeData.form === 'input' ? props.nodeData.name : '');
+}
 
 function onVisibleChange(visible) {
   if (visible && props.nodeData.form === 'select' && props.nodeData.valueUrl) {
@@ -124,6 +129,9 @@ watch(() => store.state.loading.options, (newValue, oldValue) => {
 })
 watch(() => props.nodeData, (newValue, oldValue) => {
   checkData();
+})
+watch(() => props.modelValue, (newValue, oldValue) => {
+  fieldValue.value = newValue
 })
 
 </script>

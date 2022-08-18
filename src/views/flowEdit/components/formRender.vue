@@ -38,7 +38,7 @@
 
   <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%">
     <div class="dia-content">
-      <Inputs types="properties,transforms" :node="node" />
+      <Inputs @selectExpression="onSelectExpression" />
       <!-- <el-form :model="dialogForm" class="dia-form">
         <el-form-item v-for="field in dialogFormConfig">
           <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
@@ -46,14 +46,14 @@
       </el-form> -->
       <div class="dia-form">
         <div class="form-line" v-for="field in dialogFormConfig">
-          <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
+          <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl" :focus="onFocus"></field-factory>
           <field-factory
             v-for="subField in field.extend[properties[field.name]].content"
             v-if="properties[field.name]&&field.extend"
             :key="subField.name"
             :node-data="subField"
             v-model="dialogForm[subField.name]"
-            @input="updateDialogForm" :getFormatUrl="getFormatUrl"
+            @input="updateDialogForm" :getFormatUrl="getFormatUrl" :focus="onFocus"
           >
           </field-factory>
         </div>
@@ -90,6 +90,8 @@ let properties = ref(store.getters.getProperties(props.node.id, props.node.paren
 let dialogForm = ref({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
+// 处于焦点中的输入框
+let focusInputName = ref('')
 
 function updateProperties({name, value}) {
   properties[name] = value;
@@ -160,6 +162,16 @@ function getFormatUrl(str) {
     return item;
   });
   return arr.join('&');
+}
+
+function onFocus(name) {
+  focusInputName.value = name;
+}
+
+function onSelectExpression(exp: string) {
+  if (focusInputName.value) {
+    dialogForm.value[focusInputName.value] = exp;
+  }
 }
 
 watch(() => props.node, (newValue) => {
