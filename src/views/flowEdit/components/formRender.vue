@@ -36,12 +36,15 @@
     </div>
   </div>
 
-  <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close>
-    <el-form :model="dialogForm" class="dia-form" label-width="120px">
-      <el-form-item v-for="field in dialogFormConfig" :label="field.title">
-        <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
-      </el-form-item>
-    </el-form>
+  <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%">
+    <div class="dia-content">
+      <Inputs types="properties,transforms" :node="node" />
+      <el-form :model="dialogForm" class="dia-form" label-width="120px">
+        <el-form-item v-for="field in dialogFormConfig" :label="field.title">
+          <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
+        </el-form-item>
+      </el-form>
+    </div>
     <template #footer>
       <el-button @click="dialogFormVisible = false">取 消</el-button>
       <el-button type="primary" @click="onSubmit">确 定</el-button>
@@ -53,9 +56,10 @@
 import { watch, ref, defineProps } from "vue";
 import { useStore } from 'vuex';
 import { has, map } from 'lodash';
-import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 import { ActiveNode } from '@/store/type';
 import { ElMessage } from "element-plus";
+import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
+import Inputs from '@/components/inputs.vue'
 
 const store = useStore();
 
@@ -183,8 +187,15 @@ watch(() => props.node, (newValue) => {
   }
 }
 
+.dia-content {
+  display: flex;
+}
 .dia-form {
-  width: 50%;
+  flex: 1 1 60%;
+  margin-left: -1px;
+  padding-top: 20px;
+  padding-right: 20px;
+  border: 1px solid  var(--el-border-color-lighter);
   * {
     user-select: none !important;
 

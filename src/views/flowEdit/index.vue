@@ -53,7 +53,7 @@
             <div class="item-box">
               <rectNode
                 :icon="node.icon"
-                :label="node.description"
+                :label="node.name"
                 @mousedown="dropNode($event,node)"
                 v-for="node in item.processorMetaVOList"
               ></rectNode>
@@ -69,7 +69,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, Ref, ref, createVNode, computed, watch, watchEffect } from "vue";
+import { onMounted, Ref, ref, createVNode, computed, provide, watchEffect } from "vue";
 import { Graph, Addon, Rectangle, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
 import { get } from 'lodash';
@@ -92,6 +92,7 @@ let activeNode:Ref<ActiveNode> = ref();
 let loading = computed<boolean>(() => store.state.loading.nodeGroup);
 let canRedo = ref(true);
 let canUndo = ref(true);
+provide('activeNode', activeNode);
 
 function initEditor() {
   //注册组件节点
@@ -239,6 +240,7 @@ function initEditor() {
     },
     snapline: true,
   });
+  provide('graph', graph);
   dnd = new Addon.Dnd({
     target: graph,
     scaled: false,
@@ -260,7 +262,7 @@ function initEditor() {
   })
   // 点击画布中的节点
   graph.on('node:click', ({node}) => {
-    const item = {id: node.id, label: get(node, 'data.description'), kind: get(node, 'data.kind'), parentId: node.getParentId()};
+    const item = {id: node.id, name: get(node, 'data.name'), kind: get(node, 'data.kind'), parentId: node.getParentId()};
     if (item.parentId) {
       item.grantId = node.parent?.getParentId();
     }
@@ -354,6 +356,7 @@ function initEditor() {
     if (kind === 'when') return;
     const processor: Processor = {
       processorId: node.id,
+      name: get(node, 'data.name'),
       kind: kind,
       properties: {},
       output: ''
@@ -369,6 +372,7 @@ function initEditor() {
             const child = branch.create(graph, node, index, item);
             processor.processors.push({
               processorId: child.id,
+              name: get(node, 'data.name'),
               kind: item.processorType,
               properties: {},
               output: ''
@@ -387,7 +391,7 @@ function initEditor() {
 function dropNode(evt: any, nodeData: any) {
   let node: Node | undefined;
   //判断节点类型 实现不同类型的节点添加到画布
-  const { processorType, description, icon } = nodeData;
+  const { processorType, name, icon } = nodeData;
   switch (processorType) {
     case 'loop':
       node = graph.createNode({
@@ -427,7 +431,7 @@ function dropNode(evt: any, nodeData: any) {
         zIndex: 3,
         data: {
           kind: processorType,
-          description, icon
+          name, icon
         }
       });
   }
@@ -444,8 +448,7 @@ function onUndo() {
 }
 
 function onSave() {
-  const graphJson = graph.toJSON();
-  store.dispatch('saveFlow', graphJson)
+  store.dispatch('saveFlow', graph.toJSON())
 }
 
 watchEffect(() => {
@@ -454,9 +457,10 @@ watchEffect(() => {
 })
 
 onMounted(() => {
-  initEditor()
+  initEditor();
   store.dispatch('fetchComponents');
   store.dispatch('fetchContext');
+  store.dispatch('fetchTransformList');
   const data = store.state.graphJson;
   if (data) {
   console.log('--- onMounted')

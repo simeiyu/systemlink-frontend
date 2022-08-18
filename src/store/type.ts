@@ -8,6 +8,7 @@ export interface ActiveNode {
 }
 export interface Processor {
   processorId: string;
+  name?: string;
   kind: string;
   properties: object;
   processors?: Processor[];
@@ -54,4 +55,8 @@ export interface State {
   options: {
     [propName: string]: any[]
   };
+  transform: {
+    list: any[];
+    [propName: string]: any
+  }
 }

@@ -1,7 +1,7 @@
 import { Transform } from './../api/api';
 import { createStore } from 'vuex';
 import { NodeGroup, FlowRoute, Suanpan } from '@/api/api';
-import { map, find, get, forEach, remove, isEmpty } from 'lodash';
+import { map, find, get, forEach, remove, filter, isEmpty } from 'lodash';
 import { State } from './type';
 
 export const store = createStore<State>({
@@ -21,6 +21,9 @@ export const store = createStore<State>({
       },
       nodeGroup: [],
       options: {},
+      transform: {
+        list: []
+      }
     }
   },
   getters: {
@@ -35,6 +38,10 @@ export const store = createStore<State>({
     getMetaInfo: (state) => (kind) => {
       const metaInfo = get(state.componentInfo, `${kind}.metaInfo`, '');
       return typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo);
+    },
+    getInputTransforms: (state) => (nodes) => {
+      if (isEmpty(nodes)) return []
+      return filter(state.flowOut.transforms, item => nodes.includes(item.processorId))
     }
   },
   mutations: {
@@ -42,6 +49,9 @@ export const store = createStore<State>({
     initFlowData(state, {routeJson, showRule}) {
       state.flowOut = JSON.parse(routeJson);
       state.graphJson = JSON.parse(showRule);
+    },
+    setGraphJson(state, payload) {
+      state.graphJson = payload;
     },
     // 增加节点
     addProcessor(state, item) {
@@ -119,6 +129,18 @@ export const store = createStore<State>({
     },
     setOptions(state, {path, data}) {
       state.options[path] = data;
+    },
+    setTransformList(state, payload) {
+      state.transform.list = map(payload, item => {
+        if (item.metaInfo) {
+          return {
+            ...item,
+            metaInfo: JSON.parse(item.metaInfo)
+          }
+        }
+        return item
+      })
+      console.log(' tranform: ', state.transform.list)
     }
   },
   actions: {
@@ -190,9 +212,8 @@ export const store = createStore<State>({
     },
     // 保存画布数据（flowOut、graphJson）
     saveFlow({commit, state}, payload) {
-      console.log('--- save context: ', state.spContext)
-      console.log('--- save showRule: ', state.flowOut)
-      console.log('--- save routeJson: ', payload)
+      console.log('--- save showRule: ', payload)
+      commit('setGraphJson', payload);
       FlowRoute.save({
         nodeId: state.spContext?.nodeId,
         showRule: JSON.stringify(payload),
@@ -200,9 +221,9 @@ export const store = createStore<State>({
       })
     },
     // 请求转换方法列表
-    fetchTransformList() {
+    fetchTransformList({commit}) {
       Transform.getList().then((res: any) => {
-        console.log('--- transform list: ', res)
+        commit('setTransformList', res.data);
       })
     }
   }
