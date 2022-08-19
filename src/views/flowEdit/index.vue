@@ -36,32 +36,37 @@
     </div>
     <!-- 右侧组件栏、设置项 -->
     <div class="tool-box">
-      <el-tabs v-model="activeName" class="demo-tabs">
+      <el-tabs v-model="activeName" class="sys-tabs">
         <el-tab-pane label="组件栏" name="组件栏">
-          <el-input class="input" placeholder="关键词搜索" size="large"/>
-          <el-skeleton style="padding: 12px;" v-if="loading" :rows="5" animated />
-          <div class="nodeGroup"
-               :class="{active:curActive===index}"
-               v-for="(item,index) in nodeGroup">
-            <div class="item-block"
-                 @click="curActive=index">
-              <el-icon class="arrow-icon">
-                <CaretRight/>
-              </el-icon>
-              <span>{{ item.name }}</span>
-            </div>
-            <div class="item-box">
-              <rectNode
-                :icon="node.icon"
-                :label="node.name"
-                @mousedown="dropNode($event,node)"
-                v-for="node in item.processorMetaVOList"
-              ></rectNode>
+          <div class="sys-group">
+            <el-input class="input" placeholder="关键词搜索" size="large"/>
+            <el-skeleton style="padding: 12px;" v-if="loading" :rows="5" animated />
+            <div class="sys-group-nodes"
+                :class="{active:curActive===index}"
+                v-for="(item,index) in nodeGroup">
+              <div class="item-block"
+                  @click="curActive=index">
+                <el-icon class="arrow-icon">
+                  <CaretRight/>
+                </el-icon>
+                <span>{{ item.name }}</span>
+              </div>
+              <div class="item-box">
+                <rectNode
+                  :icon="node.icon"
+                  :label="node.name"
+                  @mousedown="dropNode($event,node)"
+                  v-for="node in item.processorMetaVOList"
+                ></rectNode>
+              </div>
             </div>
           </div>
         </el-tab-pane>
         <el-tab-pane label="设置项" name="设置项">
-          <form-render v-if="activeNode" :node="activeNode"></form-render>
+          <el-scrollbar>
+            <form-render v-if="activeNode" :node="activeNode"></form-render>
+            <node-setting :node="activeNode" :delete="deleteNode" :updateName="updateName" />
+          </el-scrollbar>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -81,6 +86,7 @@ import loopNode from "@/components/nodes/loopNode.vue"
 import transform from '@/components/transform.vue';
 import branch from "@/utils/choice/branch";
 import formRender from './components/formRender.vue'
+import nodeSetting from './components/nodeSetting.vue'
 import { ActiveNode, Processor } from '@/store/type';
 
 const store = useStore();
@@ -90,7 +96,7 @@ let graph: Graph;
 const activeName = ref('组件栏');
 let curActive = ref(0);
 let nodeGroup = computed(() => store.state.nodeGroup);
-let activeNode:Ref<ActiveNode> = ref();
+let activeNode:Ref<ActiveNode | null> = ref();
 let loading = computed<boolean>(() => store.state.loading.nodeGroup);
 let canRedo = ref(true);
 let canUndo = ref(true);
@@ -204,9 +210,9 @@ function initEditor() {
       rubberband: true,
       showNodeSelectionBox: true,
       // choice组件在画布中不选中
-      filter(node) {
-        return !node.component || node.component !== 'choiceNode';
-      },
+      // filter(node) {
+      //   return !node.component || node.component !== 'choiceNode';
+      // },
       // 有节点被选中，其他事件依然响应
       pointerEvents: 'none',
     },
@@ -265,7 +271,7 @@ function initEditor() {
   })
   // 点击画布中的节点
   graph.on('node:click', ({node}) => {
-    const item = {id: node.id, name: get(node, 'data.name'), kind: get(node, 'data.kind'), parentId: node.getParentId()};
+    const item = {id: node.id, name: get(node, 'data.name', ''), kind: get(node, 'data.kind'), parentId: node.getParentId()};
     if (item.parentId) {
       item.grantId = node.parent?.getParentId();
     }
@@ -408,6 +414,7 @@ function dropNode(evt: any, nodeData: any) {
         zIndex: -1,
         data: {
           kind: processorType,
+          name
         }
       });
       break;
@@ -421,6 +428,7 @@ function dropNode(evt: any, nodeData: any) {
         component: 'choiceNode',
         zIndex: -1,
         data: {
+          name,
           kind: processorType,
           metaInfo: component && component.metaInfo
         }
@@ -445,6 +453,23 @@ function dropNode(evt: any, nodeData: any) {
   }
 }
 
+function deleteNode() {
+  if (activeNode.value) {
+    graph.removeCell(activeNode.value.id);
+    store.dispatch('deleteProcessor', {...activeNode.value});
+    activeNode.value = null;
+  }
+}
+
+function updateName(name) {
+  if (activeNode.value) {
+    const node = graph.getCellById(activeNode.value.id);
+    activeNode.value.name = name;
+    node.updateData({name});
+    store.dispatch('updateProcessorName', {...activeNode.value})
+  }
+}
+
 function onRedo() {
   graph.history.redo();
 }
@@ -458,6 +483,7 @@ function onSave() {
 
 function clearCells() {
   graph.clearCells();
+  store.dispatch('clear')
 }
 
 watchEffect(() => {
@@ -530,7 +556,7 @@ onMounted(() => {
 
 .flow-center {
   display: flex;
-  overflow: auto;
+  // overflow: auto;
 
   .flow-left {
     min-width: 1000px;
@@ -553,6 +579,12 @@ onMounted(() => {
     }
   }
 
+  .sys-tabs {
+    height: 100%;
+    .el-tabs__content {
+      height: calc(100% - 60px);
+    }
+  }
   .tool-box {
     width: 272px;
     height: 94vh;
@@ -570,44 +602,49 @@ onMounted(() => {
       padding-left: 16px;
     }
 
-    .nodeGroup {
-      .item-block {
-        height: 40px;
-        background: #FAFAFB;
-        opacity: 1;
-        border: 1px solid #DCDEE1;
-        font-size: 14px;
-        font-weight: 400;
-        color: #1C2126;
-        display: flex;
-        align-items: center;
-        gap: 23px;
-        padding-left: 16px;
-        cursor: pointer;
-      }
+    .sys-group {
+      width: 270px;
 
-      .item-box {
-        user-select: none;
-        transition: all .3s;
-        height: 0;
-        overflow: auto;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 14px;
-        font-weight: 400;
-        color: #4C5A67;
-      }
-
-      &.active {
-        .arrow-icon {
-          transition: all .3s;
-          transform: rotate(90deg);
+      &-nodes {
+        .item-block {
+          height: 40px;
+          background: var(--el-fill-color-extra-light);
+          opacity: 1;
+          border-top: 1px solid var(--el-border-color-light);
+          border-bottom: 1px solid var(--el-border-color-lighter);
+          font-size: 14px;
+          font-weight: 400;
+          color: var(--el-text-color-primary);
+          display: flex;
+          align-items: center;
+          gap: 23px;
+          padding-left: 16px;
+          cursor: pointer;
         }
 
         .item-box {
-          height: auto;
-          padding: 16px;
+          user-select: none;
+          transition: all .3s;
+          height: 0;
+          overflow: auto;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          font-size: 14px;
+          font-weight: 400;
+          color: var(--el-text-color-regular);
+        }
+
+        &.active {
+          .arrow-icon {
+            transition: all .3s;
+            transform: rotate(90deg);
+          }
+
+          .item-box {
+            height: auto;
+            padding: 16px;
+          }
         }
       }
     }

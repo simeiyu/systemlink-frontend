@@ -4,7 +4,7 @@
       <div class="icon">
         <i class="iconfont icon-a-lianhe290"></i>
         <div class="tip">
-          决策分支
+          {{label}}
         </div>
       </div>
       <a class="btn-toggle" @click.stop="onToggle">
@@ -26,8 +26,11 @@ const getNode = inject("getNode");
 const getGraph = inject("getGraph");
 const node = getNode();
 const graph = getGraph();
+
 let collapsed = ref(!!node.data.collapsed);
 let expandSize = reactive({width: 644, height: 486});
+let label = ref(node.data.name || '决策分支');
+
 function onToggle () {
   collapsed.value = !collapsed.value;
   node.data.collapsed = collapsed.value;
@@ -53,6 +56,9 @@ function onAddBranch () {
   const item = metaInfo.branches.find(item => item.processorType === 'when');
   branch.create(graph, node, index, item);
 }
+node.on('change:data', ({current}) => {
+  label.value = current.name;
+})
 </script>
 
 <style scoped lang="less">

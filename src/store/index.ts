@@ -1,7 +1,7 @@
 import { Transform } from './../api/api';
 import { createStore } from 'vuex';
 import { NodeGroup, FlowRoute, Suanpan, ProcessorInstance } from '@/api/api';
-import { map, find, get, forEach, remove, filter, isEmpty } from 'lodash';
+import { map, find, get, forEach, remove, filter, isEmpty, findIndex } from 'lodash';
 import { State } from './type';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -58,7 +58,7 @@ export const store = createStore<State>({
     addProcessor(state, item) {
       state.flowOut.processors.push(JSON.parse(JSON.stringify(item)));
     },
-    // 更新节点
+    // 更新节点的所在parent
     updateProcessor(state, {nodeId, parentId, prevParentId}) {
       let node;
       if (prevParentId) {
@@ -97,9 +97,9 @@ export const store = createStore<State>({
         }
       }
     },
-    // 更新节点properties
+    // 更新节点properties、name
     setProcessorProperties(state, {properties, node}) {
-      const { id, parentId, grantId } = node;
+      const { id, parentId, grantId, name } = node;
       state.flowOut.processors.forEach(item => {
         let processor;
         let parent;
@@ -113,24 +113,56 @@ export const store = createStore<State>({
         } else if (item.processorId === id) {
           processor = item;
         }
-        if (processor) processor.properties = JSON.parse(JSON.stringify(properties));
+        if (processor) {
+          if (properties) processor.properties = JSON.parse(JSON.stringify(properties));
+          processor.name = name;
+        }
       });
     },
+    // 删除节点
+    deleteProcessor(state, node) {
+      const { id, parentId, grantId, name } = node;
+      let processors;
+      if (!parentId) {
+        processors = state.flowOut.processors;
+        remove(state.flowOut.processors, item => item.processorId === id);
+      } else if (!grantId) {
+        const parentIndex = findIndex(state.flowOut.processors, item => item.processorId === parentId);
+        if (parentIndex > -1) {
+          processors = state.flowOut.processors[parentIndex].processors;
+        }
+      } else {
+        const grantIndex = findIndex(state.flowOut.processors, item => item.processorId === grantId);
+        if (grantIndex > -1) {
+          const index = findIndex(state.flowOut.processors[grantIndex].processors, item => item.processorId === parentId);
+          if (index > -1) {
+            processors = state.flowOut.processors[grantIndex].processors[index].processors;
+          }
+        }
+      }
+      processors && remove(processors, item => item.processorId === id);
+    },
+    // 更新loading
     setLoading(state, {key, loading}) {
       state.loading[key] = loading;
     },
+    // 组件栏列表
     setNodeGroup(state, data) {
       state.nodeGroup = data;
     },
+    // 组件信息字典
     setComponentInfo(state, data) {
       state.componentInfo = data;
     },
+    // 算盘环境变量
     setContext(state, payload) {
       state.spContext = payload;
     },
+    // ValurUrl 的下拉选项
     setOptions(state, {path, data}) {
       state.options[path] = data;
     },
+    // transform的元数据
     setTransformList(state, payload) {
       state.transform.list = map(payload, item => {
         if (item.metaInfo) {
@@ -235,6 +267,14 @@ export const store = createStore<State>({
     setProperties({commit}, payload) {
       commit('setProcessorProperties', payload)
     },
+    // 更新节点的name
+    updateProcessorName({commit}, node) {
+      commit('setProcessorProperties', {node});
+    },
+    // 删除节点
+    deleteProcessor({commit}, node) {
+      commit('deleteProcessor', node);
+    },
     // 保存画布数据（flowOut、graphJson）
     saveFlow({commit, state}, payload) {
       console.log('--- save routeJson: ', state.flowOut)
@@ -244,6 +284,17 @@ export const store = createStore<State>({
         showRule: JSON.stringify(payload),
         routeJson: JSON.stringify(state.flowOut)
       })
+    },
+    // 清空画布
+    clear({commit, state}) {
+      state.flowOut = {
+        routeId: "",
+        properties: {},
+        transforms: [],
+        processors: [],
+        externalDataSource: []
+      };
+      state.graphJson = {};
     },
     // 请求转换方法列表
     fetchTransformList({commit}) {
@@ -256,6 +307,6 @@ export const store = createStore<State>({
       ProcessorInstance.getUpstream(payload).then(res => {
         console.log('--- upstream: ', res)
       })
-    }
+    },
   }
 })

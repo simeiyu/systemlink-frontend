@@ -83,6 +83,7 @@ function getTreeData() {
   return data;
 }
 
+// 处理上游节点到tree
 function getUpstream(list) {
   if (isEmpty(list)) return [];
   return map(list, item => {
@@ -137,7 +138,6 @@ function openTransform (node, data) {
   store.commit('setTransform', {visible: true, transformId, processorId: activeNode.value.id})
 }
 function handleNodeClick (node: Tree) {
-  console.log('--- click: ', node)
   if (node.expression) {
     emits('selectExpression', node.expression)
   }

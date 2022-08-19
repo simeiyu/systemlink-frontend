@@ -2,7 +2,7 @@
 export interface ActiveNode {
   id: string;
   kind: string;
-  label?: string;
+  name?: string;
   parentId?: string;
   grantId?: string;
 }

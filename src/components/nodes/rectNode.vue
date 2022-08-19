@@ -34,6 +34,9 @@ export default {
         let { name, icon } = node.data;
         mapLabel.value = name;
         mapIcon.value = icon;
+        node.on('change:data', ({current}) => {
+          mapLabel.value = current.name;
+        })
       }
     })
     return {
@@ -97,6 +100,7 @@ export default {
   font-size: 14px;
   font-weight: 400;
   color: #4C5A67;
+  line-height: 1.2;
   .icon {
     .iconfont {
       font-size: 26px;

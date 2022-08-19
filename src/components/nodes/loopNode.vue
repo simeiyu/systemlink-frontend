@@ -4,7 +4,7 @@
       <div class="icon">
         <i class="iconfont icon-a-zu10160"></i>
         <div class="tip">
-          循环
+          {{label}}
         </div>
       </div>
       <a class="btn-toggle" @click.stop="onToggle">
@@ -16,12 +16,14 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, reactive } from "vue-demi";
+import { inject, ref, reactive, onMounted } from "vue-demi";
 
 const getNode = inject("getNode");
 const node = getNode();
 let collapsed = ref(!!node.data.collapsed);
 let expandSize = reactive({width: 500, height: 320});
+let label = ref(node.data.name || '循环');
+
 function onToggle () {
   collapsed.value = !collapsed.value;
   node.data.collapsed = collapsed.value;
@@ -36,6 +38,9 @@ function onToggle () {
   }
   node.getChildCount() && node.getChildren().forEach(item => item[toggleFunc]());
 }
+node.on('change:data', ({current}) => {
+  label.value = current.name;
+})
 </script>
 
 <style scoped lang="less">

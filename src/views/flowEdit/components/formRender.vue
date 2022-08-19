@@ -185,11 +185,11 @@ watch(() => props.node, (newValue) => {
 .render {
   box-sizing: border-box;
   font-size: 14px;
-  color: #828D99;
+  color: var(--el-text-color-secondary);
 
   .title {
     font-size: 14px;
-    color: #1C2126;
+    color: var(--el-text-color-primary);
     margin-bottom: 15px;
     margin-left: 13px;
   }
