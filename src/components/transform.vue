@@ -74,6 +74,7 @@ watch(() => store.state.transform.edit, (value) => {
     transform.value = {};
     metaInfo.value = null;
   }
+  console.log('--- transform metaInfo: ', metaInfo.value)
 })
 
 function onTypeChange(val) {
@@ -96,7 +97,7 @@ function onSelectExpression(exp: string) {
 }
 
 function onSubmit() {
-  console.log('--- submit: ', transform.value)
+  console.log('--- submit transform: ', transform.value)
   store.commit('updateTransforms', transform.value);
   store.commit('setTransform', {visible: false});
 }

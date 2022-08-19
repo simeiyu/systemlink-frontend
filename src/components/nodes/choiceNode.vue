@@ -28,7 +28,7 @@ const node = getNode();
 const graph = getGraph();
 
 let collapsed = ref(!!node.data.collapsed);
-let expandSize = reactive({width: 644, height: 486});
+let expandSize = reactive({width: 520, height: 400});
 let label = ref(node.data.name || '决策分支');
 
 function onToggle () {

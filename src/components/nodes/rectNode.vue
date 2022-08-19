@@ -83,8 +83,8 @@ export default {
 }
 
 .map-node {
-  width: 90px;
-  height: 90px;
+  width: 100%;
+  height: 100%;
   background: #FFFFFF;
   border-radius: 16px 16px 16px 16px;
   border: 1px solid #DCDEE1;

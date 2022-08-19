@@ -1,3 +1,4 @@
+import { ElMessage } from 'element-plus';
 import { Transform } from './../api/api';
 import { createStore } from 'vuex';
 import { NodeGroup, FlowRoute, Suanpan, ProcessorInstance } from '@/api/api';
@@ -38,6 +39,7 @@ export const store = createStore<State>({
     },
     getMetaInfo: (state) => (kind) => {
       const metaInfo = get(state.componentInfo, `${kind}.metaInfo`, '');
+      console.log('--- node metaInfo: ', typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo))
       return typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo);
     },
     getInputTransforms: (state) => (processorId) => {
@@ -173,7 +175,6 @@ export const store = createStore<State>({
         }
         return item
       })
-      console.log(' tranform: ', state.transform.list)
     },
     // 新增或编辑Transform
     setTransform(state, {visible, transformId, processorId}) {
@@ -188,6 +189,7 @@ export const store = createStore<State>({
       } else {
         state.transform.edit = null;
       }
+      console.log('--- set transform: ', state.transform.edit)
     },
     // 将编辑后的Transform更新到flowOut
     updateTransforms(state, transform) {
@@ -230,7 +232,6 @@ export const store = createStore<State>({
             processorMetaVOList: children
           }
         });
-        console.log('--- componentInfo: ', componentInfo)
         commit('setNodeGroup', nodeGroup);
         commit('setComponentInfo', componentInfo);
       }).finally(() => {
@@ -254,7 +255,6 @@ export const store = createStore<State>({
     fetchOptions({commit, state}, valueUrl) {
       commit('setLoading', {key: 'options', loading: true});
       NodeGroup.getOptions(valueUrl).then((res: any) => {
-        console.log('---- getOptions: ', res)
         commit('setOptions', {
           path: valueUrl,
           data: res.data
@@ -273,7 +273,12 @@ export const store = createStore<State>({
     },
     // 删除节点
     deleteProcessor({commit}, node) {
-      commit('deleteProcessor', node);
+      commit('setLoading', {key: 'delete', loading: true})
+      ProcessorInstance.delete(node.id).then((res:any) => {
+        commit('deleteProcessor', node);
+        ElMessage.success('节点信息已删除');
+        commit('setLoading', {key: 'delete', loading: false})
+      })
     },
     // 保存画布数据（flowOut、graphJson）
     saveFlow({commit, state}, payload) {
@@ -302,10 +307,12 @@ export const store = createStore<State>({
         commit('setTransformList', res.data);
       })
     },
-    // 查询前序节点的输出数据
-    fetchUpstream({commit}, payload) {
-      ProcessorInstance.getUpstream(payload).then(res => {
-        console.log('--- upstream: ', res)
+    // 保存画布节点输出信息
+    saveProcessor({commit}, payload) {
+      ProcessorInstance.save(payload).then((res: any) => {
+        if (res && res.data) {
+          ElMessage.success('保存节点信息成功')
+        }
       })
     },
   }

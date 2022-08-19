@@ -2,12 +2,12 @@ export default {
   create: function (graph, node, index, branch) {
     const {x, y} = node.position();
     const bbox = node.getBBox();
-    const space = index ? 128 : 108;
+    const space = index ? 108 : 88;
     const child = graph.createNode({
       x: x + 20,
       y: y + 122 * index + space,
       width: bbox.width - 40,
-      zIndex: 2,
+      zIndex: node.getZIndex() + 1,
       height: 122,
       data: {
         kind: 'when',

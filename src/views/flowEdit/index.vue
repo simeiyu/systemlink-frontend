@@ -24,8 +24,6 @@
       <el-button icon="Promotion" text circle size="large"/>
       <!-- 清理 -->
       <el-button icon="Briefcase" text circle size="large" @click="clearCells" />
-      <!-- 保存 -->
-      <el-button round @click="onSave">保存</el-button>
     </div>
   </div>
   <div class="flow-center">
@@ -64,7 +62,7 @@
         </el-tab-pane>
         <el-tab-pane label="设置项" name="设置项">
           <el-scrollbar>
-            <form-render v-if="activeNode" :node="activeNode"></form-render>
+            <form-render v-if="activeNode" :node="activeNode" :save="onSave"></form-render>
             <node-setting :node="activeNode" :delete="deleteNode" :updateName="updateName" />
           </el-scrollbar>
         </el-tab-pane>
@@ -75,7 +73,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, Ref, ref, createVNode, computed, provide, watchEffect } from "vue";
+import { onMounted, Ref, ref, createVNode, computed, provide, watch } from "vue";
 import { Graph, Addon, Rectangle, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
 import { get } from 'lodash';
@@ -209,6 +207,7 @@ function initEditor() {
       enabled: true,
       rubberband: true,
       showNodeSelectionBox: true,
+      showEdgeSelectionBox: true,
       // choice组件在画布中不选中
       // filter(node) {
       //   return !node.component || node.component !== 'choiceNode';
@@ -232,19 +231,24 @@ function initEditor() {
     },
     embedding: {
       enabled: true,
-      // findParent({node}) {
-      //   const bbox = node.getBBox()
-      //   return this.getNodes().filter((node) => {
-      //     // 只有 data.parent 为 true 的节点才是父节点
-      //     const data = node.getData<any>()
-      //     if (data && data.parent) {
-      //       const targetBBox = node.getBBox()
-      //       if (node.zIndex) node.zIndex -= 1;
-      //       return bbox.isIntersectWithRect(targetBBox)
-      //     }
-      //     return false
-      //   })
-      // }
+      findParent({node}) {
+        const bbox = node.getBBox()
+        return this.getNodes().filter((node) => {
+          // 只有 data.kind 为 when 或 loop 的节点才是父节点
+          const data = node.getData<any>()
+          if (data && ['choice', 'when', 'loop'].includes(data.kind)) {
+            const targetBBox = node.getBBox()
+            return bbox.isIntersectWithRect(targetBBox)
+          }
+          return false
+        })
+      }
+    },
+    resizing: {
+      enabled: true,
+      minWidth: 90,
+      minHeight: 90,
+
     },
     snapline: true,
     clipboard: true,
@@ -271,12 +275,14 @@ function initEditor() {
   })
   // 点击画布中的节点
   graph.on('node:click', ({node}) => {
-    const item = {id: node.id, name: get(node, 'data.name', ''), kind: get(node, 'data.kind'), parentId: node.getParentId()};
-    if (item.parentId) {
-      item.grantId = node.parent?.getParentId();
+    if (!activeNode.value || activeNode.value.id !== node.id) {
+      const item = {id: node.id, name: get(node, 'data.name', ''), kind: get(node, 'data.kind'), parentId: node.getParentId()};
+      if (item.parentId) {
+        item.grantId = node.parent?.getParentId();
+      }
+      activeNode.value = item;
+      activeName.value = '设置项';
     }
-    activeNode.value = item;
-    activeName.value = '设置项';
   })
   // 控制连接桩显示/隐藏
   const showPorts = (ports: NodeListOf<SVGElement>, show: boolean) => {
@@ -299,69 +305,73 @@ function initEditor() {
     showPorts(ports, false)
   })
   graph.on('node:embedded', ({node, currentParent, previousParent}) => {
+    console.log('--- node embedded: ', node, currentParent, previousParent)
     if (currentParent && currentParent.isNode()) {
-      store.commit('updateProcessor', {nodeId: node.id, parentId: currentParent.id, prevParentId: previousParent?.id});
-      let originSize = currentParent.prop('originSize')
-      if (originSize == null) {
-        currentParent.prop('originSize', currentParent.getSize())
+      if (previousParent?.id !== currentParent.id) {
+        store.commit('updateProcessor', {nodeId: node.id, parentId: currentParent.id, prevParentId: previousParent?.id});
       }
-      originSize = currentParent.prop('originSize')
+      // let originSize = currentParent.prop('originSize')
+      // if (originSize == null) {
+      //   currentParent.prop('originSize', currentParent.getSize())
+      // }
+      // originSize = currentParent.prop('originSize')
 
-      let originPosition = currentParent.prop('originPosition')
-      if (originPosition == null) {
-        currentParent.prop('originPosition', currentParent.getPosition())
-      }
-      originPosition = currentParent.prop('originPosition')
+      // let originPosition = currentParent.prop('originPosition')
+      // if (originPosition == null) {
+      //   currentParent.prop('originPosition', currentParent.getPosition())
+      // }
+      // originPosition = currentParent.prop('originPosition')
 
-      let x = originPosition.x
-      let y = originPosition.y
-      let cornerX = originPosition.x + originSize.width
-      let cornerY = originPosition.y + originSize.height
-      let hasChange = false
+      // let x = originPosition.x
+      // let y = originPosition.y
+      // let cornerX = originPosition.x + originSize.width
+      // let cornerY = originPosition.y + originSize.height
+      // let hasChange = false
 
-      const children = currentParent.getChildren()
-      if (children) {
-        children.forEach((child) => {
-          const bbox = child.getBBox().inflate(10)
-          const corner = bbox.getCorner()
+      // const children = currentParent.getChildren()
+      // if (children) {
+      //   children.forEach((child) => {
+      //     const bbox = child.getBBox().inflate(10)
+      //     const corner = bbox.getCorner()
 
-          if (bbox.x < x) {
-            x = bbox.x
-            hasChange = true
-          }
+      //     if (bbox.x < x) {
+      //       x = bbox.x
+      //       hasChange = true
+      //     }
 
-          if (bbox.y < y) {
-            y = bbox.y
-            hasChange = true
-          }
+      //     if (bbox.y < y) {
+      //       y = bbox.y
+      //       hasChange = true
+      //     }
 
-          if (corner.x > cornerX) {
-            cornerX = corner.x
-            hasChange = true
-          }
+      //     if (corner.x > cornerX) {
+      //       cornerX = corner.x
+      //       hasChange = true
+      //     }
 
-          if (corner.y > cornerY) {
-            cornerY = corner.y
-            hasChange = true
-          }
-        })
-      }
+      //     if (corner.y > cornerY) {
+      //       cornerY = corner.y
+      //       hasChange = true
+      //     }
+      //   })
+      // }
 
-      if (hasChange) {
-        currentParent.prop(
-            {
-              position: {x, y},
-              // size: {width: cornerX - x, height: cornerY - y},
-            },
-            // Note that we also pass a flag so that we know we shouldn't
-            // adjust the `originPosition` and `originSize` in our handlers.
-            {skipParentHandler: true},
-        )
-      }
+      // if (hasChange) {
+      //   currentParent.prop(
+      //       {
+      //         position: {x, y},
+      //         // size: {width: cornerX - x, height: cornerY - y},
+      //       },
+      //       // Note that we also pass a flag so that we know we shouldn't
+      //       // adjust the `originPosition` and `originSize` in our handlers.
+      //       {skipParentHandler: true},
+      //   )
+      // }
     }
   })
   graph.on('node:added', ({node, index, options}) => {
     const kind = get(node, 'data.kind');
+    console.log('--- added: ', kind, index)
     if (kind === 'when') return;
     const processor: Processor = {
       processorId: node.id,
@@ -370,7 +380,6 @@ function initEditor() {
       properties: {},
       output: ''
     }
-    console.log('--- node: ', node)
     if (node["component" as keyof typeof node] === "choiceNode") {
       //元数据解析
       processor.processors = [];
@@ -394,6 +403,34 @@ function initEditor() {
     // 将节点加入到flowOut.processors
     store.commit('addProcessor', processor);
   })
+  graph.on('node:unselected', ({node}) => {
+    if (activeNode.value && node.id === activeNode.value.id) {
+      activeNode.value = null;
+    }
+  });
+  graph.on('node:removed', ({node}) => {
+    // 节点被删除
+    const item: ActiveNode = {id: node.id, name: get(node, 'data.name', ''), kind: get(node, 'data.kind'), parentId: node.getParentId()};
+    if (item.parentId) {
+      item.grantId = node.parent?.getParentId();
+    }
+    store.dispatch('deleteProcessor', item);
+    if (activeNode.value && activeNode.value.id === node.id) {
+      activeNode.value = null;
+    }
+  })
+
+  // 键盘事件绑定
+  graph.bindKey('ctrl+c', () => {
+
+  })
+  graph.bindKey('delete', () => {
+    const cells = graph.getSelectedCells()
+    if (cells.length) {
+      graph.removeCells(cells)
+    }
+  })
+  
   canRedo.value = graph.history.canRedo();
   canUndo.value = graph.history.canUndo();
 }
@@ -402,7 +439,6 @@ function dropNode(evt: any, nodeData: any) {
   let node: Node | undefined;
   //判断节点类型 实现不同类型的节点添加到画布
   const { processorType, name, icon } = nodeData;
-  console.log('--- nodeData: ', nodeData)
   switch (processorType) {
     case 'loop':
       node = graph.createNode({
@@ -411,7 +447,7 @@ function dropNode(evt: any, nodeData: any) {
         width: 500,
         height: 320,
         component: 'loopNode',
-        zIndex: -1,
+        zIndex: 1,
         data: {
           kind: processorType,
           name
@@ -423,10 +459,10 @@ function dropNode(evt: any, nodeData: any) {
       node = graph.createNode({
         ports: {...ports},
         shape: 'vue-shape',
-        width: 644,
-        height: 486,
+        width: 520,
+        height: 400,
         component: 'choiceNode',
-        zIndex: -1,
+        zIndex: 1,
         data: {
           name,
           kind: processorType,
@@ -453,12 +489,8 @@ function dropNode(evt: any, nodeData: any) {
   }
 }
 
-function deleteNode() {
-  if (activeNode.value) {
-    graph.removeCell(activeNode.value.id);
-    store.dispatch('deleteProcessor', {...activeNode.value});
-    activeNode.value = null;
-  }
+function deleteNode(node) {
+  graph.removeCell(node.id);
 }
 
 function updateName(name) {
@@ -481,14 +513,21 @@ function onSave() {
   store.dispatch('saveFlow', graph.toJSON())
 }
 
+// 清空画布
 function clearCells() {
   graph.clearCells();
   store.dispatch('clear')
 }
 
-watchEffect(() => {
-  console.log('--- watch Effect', graph, store.state.graphJson)
+watch(() => store.state.graphJson, () => {
   graph && graph.fromJSON(store.state.graphJson)
+})
+
+watch(() => store.state.loading.delete, (val, oldVal) => {
+  // 删除节点后保存一次画布数据
+  if (oldVal && !val) {
+    onSave();
+  }
 })
 
 onMounted(() => {
@@ -498,7 +537,6 @@ onMounted(() => {
   store.dispatch('fetchTransformList');
   const data = store.state.graphJson;
   if (data) {
-  console.log('--- onMounted')
     graph.fromJSON(data);
   }
 })

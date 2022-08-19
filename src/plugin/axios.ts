@@ -48,16 +48,22 @@ export function request(url='',params={},type='GET'){
 //设置 url params type 的默认值
     return new Promise((resolve,reject)=>{
         let promise
-        if( type.toUpperCase()==='GET' ){
+        if ( type.toUpperCase()==='GET' ){
             promise = axios({
                 url,
                 params
             })
-        }else if( type.toUpperCase()=== 'POST' ){
+        } else if( type.toUpperCase()=== 'POST' ){
             promise = axios({
                 method:'POST',
                 url,
                 data:params
+            })
+        } else if( type.toUpperCase()=== 'DELETE' ){
+            promise = axios({
+                method:'DELETE',
+                url,
+                params
             })
         }
         //处理返回

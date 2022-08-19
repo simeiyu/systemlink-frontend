@@ -1,7 +1,9 @@
 <template>
   <div class="render">
     <div class="title">
-      {{ formConfig.title }}
+      <span>{{ formConfig.title }}</span>
+      <!-- 保存 -->
+      <el-button type="primary" plain round @click="onSave">保存</el-button>
     </div>
     <div class="hr"></div>
     <div class="form-box">
@@ -68,18 +70,21 @@
 </template>
 
 <script lang="ts" setup>
-import { watch, ref, defineProps } from "vue";
+import { watch, ref, defineProps, inject } from "vue";
 import { useStore } from 'vuex';
-import { has, map } from 'lodash';
+import { has, map, filter } from 'lodash';
 import { ActiveNode } from '@/store/type';
 import { ElMessage } from "element-plus";
+import { Graph } from '@antv/x6';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 import Inputs from '@/components/inputs.vue'
 
 const store = useStore();
+const graph: Graph | undefined = inject('graph');
 
 interface Props {
   node: ActiveNode;
+  save: Function;
 }
 
 const props = defineProps<Props>();
@@ -126,7 +131,6 @@ function getExtendData(modelData) {
     _dialogForm[modelData.name] = properties.value[modelData.name] || '';
   }
   dialogForm.value = _dialogForm;
-  console.log('--- dialogFormConfig: ', dialogFormConfig.value)
 }
 
 function onSubmit() {
@@ -136,11 +140,10 @@ function onSubmit() {
     ...dialogForm.value
   }
   properties.value = _properties;
-  // emits('update:modelValue', Object.assign(properties, dialogForm));
   store.dispatch('setProperties', {
     properties: _properties,
     node: props.node
-  })
+  });
 }
 
 function getFormatUrl(str) {
@@ -174,6 +177,31 @@ function onSelectExpression(exp: string) {
   }
 }
 
+function getUpstreamProcessorId() {
+  if (!graph || !props.node) return '';
+  const { id, parentId } = props.node;
+  if (parentId) return parentId;
+  const edges = graph.getEdges();
+  const upstreams = map(filter(edges, edge => edge.target.cell === id), edge => edge.source.cell);
+  return upstreams[0];
+}
+function onSave() {
+  const upStreamProcessorId = getUpstreamProcessorId();
+  const { nodeId } = store.state.spContext;
+  const { id, kind } = props.node;
+  // 保存画布全部信息
+  props.save && props.save();
+  // 保存画布节点输出信息
+  store.dispatch('saveProcessor', {
+    nodeId,
+    parentProcessorId: upStreamProcessorId,
+    processorId: id,
+    processorType: kind,
+    properties: JSON.stringify(properties.value),
+    output: ''
+  })
+}
+
 watch(() => props.node, (newValue) => {
   formConfig.value = store.getters.getMetaInfo(newValue.kind);
   properties.value = store.getters.getProperties(newValue.id, newValue.parentId, newValue.grantId);
@@ -188,10 +216,13 @@ watch(() => props.node, (newValue) => {
   color: var(--el-text-color-secondary);
 
   .title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 14px;
     color: var(--el-text-color-primary);
-    margin-bottom: 15px;
-    margin-left: 13px;
+    margin-bottom: 12px;
+    padding: 0 12px;
   }
 
   .form-box {

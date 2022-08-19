@@ -57,8 +57,17 @@ export class Transform {
  * 画布节点详情
  */
 export class ProcessorInstance {
+  // 查询前序节点的输出数据
   static async getUpstream(id) {
     return request('/systemlink/processorInstance/findParent', {processorId: id})
+  }
+  // 保存画布节点输出信息
+  static async save(params) {
+    return request('/systemlink/processorInstance', params, 'post')
+  }
+  // 删除画布节点输出信息
+  static async delete(id) {
+    return request('/systemlink/processorInstance', {processorId: id}, 'delete')
   }
 }
 

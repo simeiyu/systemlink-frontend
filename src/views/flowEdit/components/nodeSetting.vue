@@ -23,7 +23,7 @@ interface Props {
 const props = defineProps<Props>();
 
 function deleteNode () {
-  props.delete && props.delete()
+  props.delete && props.delete(props.node)
 }
 
 function updateName(val) {
@@ -35,6 +35,7 @@ function updateName(val) {
 <style lang="less" scoped>
   .sys-node{
     &-info {
+      margin-top: 16px;
       border-top: 1px solid var(--el-border-color-light);
     }
     &-body {
