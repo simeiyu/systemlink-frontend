@@ -45,6 +45,9 @@ export const store = createStore<State>({
     getInputTransforms: (state) => (processorId) => {
       if (isEmpty(processorId)) return []
       return filter(state.flowOut.transforms, item => item.processorId === processorId)
+    },
+    getProcessor: (state) => (id) => {
+      return find(state.flowOut.processors, {processorId: id});
     }
   },
   mutations: {
@@ -57,8 +60,27 @@ export const store = createStore<State>({
       state.graphJson = payload;
     },
     // 增加节点
-    addProcessor(state, item) {
-      state.flowOut.processors.push(JSON.parse(JSON.stringify(item)));
+    addProcessor(state, {parentId, grantId, processor}) {
+      if (!parentId) {
+        state.flowOut.processors.push(JSON.parse(JSON.stringify(processor)));
+      } else if (!grantId) {
+        const parentIndex = findIndex(state.flowOut.processors, item => item.processorId === parentId);
+        if (parentIndex > -1) {
+          if (!state.flowOut.processors[parentIndex].processors) state.flowOut.processors[parentIndex].processors = [];
+          state.flowOut.processors[parentIndex].processors?.push(processor);
+        }
+      } else {
+        const grantIndex = findIndex(state.flowOut.processors, item => item.processorId === grantId);
+        if (grantIndex > -1 && state.flowOut.processors[grantIndex].processors) {
+          const parentIndex = findIndex(state.flowOut.processors[grantIndex].processors, item => item.processorId === grantId);
+          if (parentIndex > -1) {
+            if (!state.flowOut.processors[grantIndex].processors[parentIndex].processors) {
+              state.flowOut.processors[grantIndex].processors[parentIndex].processors = [];
+            }
+            state.flowOut.processors[grantIndex].processors[parentIndex].processors?.push(processor);
+          }
+        }
+      }
     },
     // 更新节点的所在parent
     updateProcessor(state, {nodeId, parentId, prevParentId}) {
@@ -98,6 +120,11 @@ export const store = createStore<State>({
           state.flowOut.processors.push(...node);
         }
       }
+    },
+    // 增加choice节点内的when
+    addChoiceProcessor(state, { choiceId, processor}) {
+      const choiceIndex = state.flowOut.processors.findIndex(item => item.processorId === choiceId);
+      if (choiceIndex > -1) state.flowOut.processors[choiceIndex].processors?.push(processor);
     },
     // 更新节点properties、name
     setProcessorProperties(state, {properties, node}) {
@@ -243,6 +270,16 @@ export const store = createStore<State>({
       Suanpan.getContext().then((res: any) => {
         commit('setContext', res.data);
         dispatch('fetchFlow', res.data.nodeId);
+      }).finally(() => {
+        commit('setContext', {
+          "appId": 77800,
+          "nodeId": "99ec0780f39211ec84c5bfc02d1bcaa4",
+          "userId": 1000184,
+          "componentId": 15130,
+          "component": "DataConnector",
+          "componentType": "DataBase"
+        })
+        dispatch('fetchFlow', "99ec0780f39211ec84c5bfc02d1bcaa4");
       })
     },
     // 请求画布数据（flowOut， graphJson）

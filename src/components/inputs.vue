@@ -118,7 +118,7 @@ function getUpstream(list) {
 const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
   if (node.level === 0) {
     const rootTree = getTreeData();
-    ProcessorInstance.getUpstream(6).then((res: any) => {
+    ProcessorInstance.getUpstream(node.id).then((res: any) => {
       const upstream = res ? getUpstream(res.data) : [];
       rootTree.push(...upstream);
       resolve(rootTree)

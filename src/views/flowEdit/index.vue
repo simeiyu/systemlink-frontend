@@ -234,9 +234,9 @@ function initEditor() {
       findParent({node}) {
         const bbox = node.getBBox()
         return this.getNodes().filter((node) => {
-          // 只有 data.kind 为 when 或 loop 的节点才是父节点
+          // 只有 data.kind 为 when、otherwise 或 loop 的节点才是父节点
           const data = node.getData<any>()
-          if (data && ['choice', 'when', 'loop'].includes(data.kind)) {
+          if (data && ['choice', 'when', 'otherwise', 'loop'].includes(data.kind)) {
             const targetBBox = node.getBBox()
             return bbox.isIntersectWithRect(targetBBox)
           }
@@ -244,12 +244,11 @@ function initEditor() {
         })
       }
     },
-    resizing: {
-      enabled: true,
-      minWidth: 90,
-      minHeight: 90,
-
-    },
+    // resizing: {
+    //   enabled: true,
+    //   minWidth: 90,
+    //   minHeight: 90,
+    // },
     snapline: true,
     clipboard: true,
   });
@@ -371,11 +370,11 @@ function initEditor() {
   })
   graph.on('node:added', ({node, index, options}) => {
     const kind = get(node, 'data.kind');
-    console.log('--- added: ', kind, index)
-    if (kind === 'when') return;
+    const parentId = node.getParentId();
+    if ((kind === 'when' || kind === 'otherwise') && !store.getters.getProcessor(parentId)) return;
     const processor: Processor = {
       processorId: node.id,
-      name: get(node, 'data.name'),
+      name: get(node, 'data.name', ''),
       kind: kind,
       properties: {},
       output: ''
@@ -386,22 +385,25 @@ function initEditor() {
       const component = store.state.componentInfo[kind];
       if (component) {
         let choiceData = JSON.parse(component.metaInfo);
-        choiceData.branches.forEach((item, index)=>{
-          if (item.processorType === 'when') {
-            const child = branch.create(graph, node, index, item);
-            processor.processors.push({
-              processorId: child.id,
-              name: get(node, 'data.name'),
-              kind: item.processorType,
-              properties: {},
-              output: ''
-            })
-          }
+        choiceData.branches.forEach((item)=>{
+          const child = branch.create(graph, node, item);
+          processor.processors.push({
+            processorId: child.id,
+            name: get(child, 'data.name', ''),
+            kind: item.processorType,
+            properties: {},
+            output: ''
+          })
         });
       }
     }
     // 将节点加入到flowOut.processors
-    store.commit('addProcessor', processor);
+    const item = { parentId: parentId, processor };
+    if (parentId) {
+      item.grantId = item.parent?.getParentId();
+    }
+    console.log('add ', kind, item)
+    store.commit('addProcessor', item);
   })
   graph.on('node:unselected', ({node}) => {
     if (activeNode.value && node.id === activeNode.value.id) {
@@ -414,6 +416,22 @@ function initEditor() {
     if (item.parentId) {
       item.grantId = node.parent?.getParentId();
     }
+    // 如果被删除的节点是when，则修改choice节点的height及其子节点的y
+    if (item.kind === 'when') {
+      const choice = graph.getCellById(item.parentId);
+      if (choice) {
+        const { y } = node.position();
+        const children = choice.getChildren();
+        const { width, height } = choice.getSize();
+        choice.resize(width, height - 122 - 20);
+        children && children?.forEach(item => {
+          const pos = item.position();
+          if (pos.y > y) {
+            item.position(pos.x, pos.y - 142)
+          }
+        });
+      }
+    }
     store.dispatch('deleteProcessor', item);
     if (activeNode.value && activeNode.value.id === node.id) {
       activeNode.value = null;
@@ -425,7 +443,7 @@ function initEditor() {
 
   })
   graph.bindKey('delete', () => {
-    const cells = graph.getSelectedCells()
+    const cells = graph.getSelectedCells();
     if (cells.length) {
       graph.removeCells(cells)
     }

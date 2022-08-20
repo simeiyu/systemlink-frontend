@@ -51,10 +51,10 @@ function onToggle () {
   });
 }
 function onAddBranch () {
-  const index = node.getChildren().length;  
   const metaInfo = JSON.parse(node.getData().metaInfo);
   const item = metaInfo.branches.find(item => item.processorType === 'when');
-  branch.create(graph, node, index, item);
+  console.log('--- when： ', item)
+  branch.create(graph, node, item);
 }
 node.on('change:data', ({current}) => {
   label.value = current.name;

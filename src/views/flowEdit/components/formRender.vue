@@ -41,23 +41,28 @@
   <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%">
     <div class="dia-content">
       <Inputs @selectExpression="onSelectExpression" />
-      <!-- <el-form :model="dialogForm" class="dia-form">
+      <!-- <el-form :model="dialogForm" class="dia-form" label-position="top">
         <el-form-item v-for="field in dialogFormConfig">
           <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
         </el-form-item>
       </el-form> -->
       <div class="dia-form">
         <div class="form-line" v-for="field in dialogFormConfig">
+          <div class="sys-label">{{ field.title }}</div>
           <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl" :focus="onFocus"></field-factory>
-          <field-factory
-            v-for="subField in field.extend[properties[field.name]].content"
+          <div
             v-if="properties[field.name]&&field.extend"
+            v-for="subField in field.extend[properties[field.name]].content"
             :key="subField.name"
-            :node-data="subField"
-            v-model="dialogForm[subField.name]"
-            @input="updateDialogForm" :getFormatUrl="getFormatUrl" :focus="onFocus"
-          >
-          </field-factory>
+            >
+            <div class="sys-label">{{ subField.title }}</div>
+            <field-factory
+              :node-data="subField"
+              v-model="dialogForm[subField.name]"
+              @input="updateDialogForm" :getFormatUrl="getFormatUrl" :focus="onFocus"
+            >
+            </field-factory>
+          </div>
         </div>
       </div>
 
@@ -261,8 +266,9 @@ watch(() => props.node, (newValue) => {
   .form-line {
     margin: 20px;
 
-    div {
-      margin: 0 5px;
+    .sys-label {
+      color: var(--el-text-color-primary);
+      margin-bottom: 8px;
     }
   }
 }

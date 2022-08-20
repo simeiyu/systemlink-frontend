@@ -5,7 +5,7 @@
     <el-form-item label="名称" label-width="40">
       <el-input v-model="node.name" placeholder="节点名称" @change="updateName"></el-input>
     </el-form-item>
-    <el-button style="margin-left: 40px" type="danger" plain icon="Delete" @click="deleteNode">删除节点</el-button>
+    <el-button style="margin-left: 40px" type="danger" :disabled="node.kind === 'otherwise'" plain icon="Delete" @click="deleteNode">删除节点</el-button>
     </div>
   </div>
 </template>
