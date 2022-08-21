@@ -23,6 +23,13 @@
         :label="item.name"
         :value="item.value"
     />
+    <el-checkbox
+      v-if="type==='el-checkbox-group'"
+      v-for="item in options"
+      :key="item.name"
+      :label="item.name"
+      :value="item.value"
+    />
   </component>
 </template>
 
@@ -58,7 +65,8 @@ const fieldMap = {
   input: 'el-input',
   table: markRaw(EditTable),
   datetime:markRaw(DatePicker),
-  "textArea":'el-input'
+  "textArea":'el-input',
+  "el-checkbox-group": 'el-checkbox-group',
 }
 const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
@@ -95,6 +103,7 @@ function checkData() {
   fieldValue.value = props.modelValue;
   switch (props.nodeData.form) {
     case 'select':
+    case 'el-checkbox-group':
       loadOptionData();
       break;
     case 'table' :
@@ -125,7 +134,7 @@ function onVisibleChange(visible) {
 }
 
 watch(() => store.state.loading.options, (newValue, oldValue) => {
-  if (props.nodeData.form === 'select' && oldValue && !newValue) {
+  if (['select', 'el-checkbox-group'].includes(props.nodeData.form) && oldValue && !newValue) {
     options.value = store.state.options[optionKey.value] || [];
   }
 })
