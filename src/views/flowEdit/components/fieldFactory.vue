@@ -13,6 +13,8 @@
       :no-data-text="'暂无数据'"
       :loading="loading"
       @focus="onFocus"
+      :type="nodeData.form === 'textArea' && 'textarea'"
+      :rows="2"
     >
     <el-option
         v-if="type==='el-select'"
@@ -56,7 +58,7 @@ const fieldMap = {
   input: 'el-input',
   table: markRaw(EditTable),
   datetime:markRaw(DatePicker),
-  "textArea":'textarea'
+  "textArea":'el-input'
 }
 const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
