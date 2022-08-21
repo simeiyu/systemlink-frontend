@@ -63,14 +63,12 @@ let focusInputName = ref('')
 
 watch(() => store.state.transform.edit, (value) => {
   if (value) {
-    visible = store.state.transform.visible;
     transform.value = value;
     if (value.properties.type) {
       const active = find(list.value, ({type}) => type === value.properties.type);
       metaInfo.value = active && active.metaInfo;
     }
   } else {
-    visible = false;
     transform.value = {};
     metaInfo.value = null;
   }
