@@ -1,21 +1,22 @@
 <template>
+  <el-skeleton v-if="nodeData.form==='el-checkbox-group' && loading" :rows="3" animated />
   <component
-      :is="type"
-      show-time
-      :multiple="nodeData.multiple"
-      :required="nodeData.required"
-      :tableConfig="nodeData.table"
-      @change="change"
-      v-model="fieldValue"
-      :value-format="dateFormat"
-      :placeholder="nodeData.title"
-      @visible-change="onVisibleChange"
-      :no-data-text="'暂无数据'"
-      :loading="loading"
-      @focus="onFocus"
-      :type="nodeData.form === 'textArea' && 'textarea'"
-      :rows="2"
-    >
+    :is="type"
+    show-time
+    :multiple="nodeData.multiple"
+    :required="nodeData.required"
+    :tableConfig="nodeData.table"
+    @change="change"
+    @focus="onFocus"
+    v-model="fieldValue"
+    :value-format="dateFormat"
+    :placeholder="nodeData.title"
+    :no-data-text="'暂无数据'"
+    :loading="loading"
+    loading-text="加载中"
+    :type="nodeData.form === 'textArea' && 'textarea'"
+    :rows="2"
+  >
     <el-option
         v-if="type==='el-select'"
         v-for="item in options"
@@ -24,7 +25,8 @@
         :value="item.value"
     />
     <el-checkbox
-      v-if="type==='el-checkbox-group'"
+      class="sys-checkbox"
+      v-if="nodeData.form === 'el-checkbox-group'"
       v-for="item in options"
       :key="item.name"
       :label="item.name"
@@ -36,10 +38,12 @@
 <script lang="ts" setup>
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
-import { readonly, ref, defineEmits, watch, computed, markRaw } from "vue";
-import { forEach, isEmpty } from 'lodash';
+import { ref, defineEmits, watch, computed, markRaw, onMounted } from "vue";
+import { forEach, isEmpty, has, map } from 'lodash';
 import { useStore } from 'vuex';
+import { ElMessage } from 'element-plus';
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
+import { NodeGroup } from '@/api/api';
 
 const emit = defineEmits(['input'])
 const store = useStore();
@@ -55,16 +59,14 @@ const props = defineProps({
     required: true,
     default: () => ''
   },
-  getFormatUrl: {
-    type: Function
-  },
-  focus: Function
+  focus: Function,
+  properties: Object
 });
 const fieldMap = {
   select: 'el-select',
   input: 'el-input',
   table: markRaw(EditTable),
-  datetime:markRaw(DatePicker),
+  datetime: markRaw(DatePicker),
   "textArea":'el-input',
   "el-checkbox-group": 'el-checkbox-group',
 }
@@ -73,14 +75,15 @@ const dateFormat = "YYYY-MM-DD HH:mm:ss";
 let options = ref([]);
 let type = ref('');
 let fieldValue = ref();
-let optionKey = ref('');
-let loading = computed<boolean>(() => store.state.loading.options);
+// valueUrl 中解析的query
+let remoteUrl = ref('');
+let loading = ref(false);
 // 装载选项数据
 function loadOptionData() {
-  if (props.getFormatUrl && props.nodeData.valueUrl) {
-    optionKey.value = props.getFormatUrl(props.nodeData.valueUrl);
-  } else {
-    options.value = props.nodeData.enum;
+  options.value = props.nodeData.enum;
+  // remote - valueUrl
+  if (props.nodeData.valueUrl) {
+    getRemoteUrl(props.properties);
   }
 }
 
@@ -99,8 +102,10 @@ function loadTableData() {
 
 //检查需要的类型
 function checkData() {
+  console.log('--- checkData: ', props.nodeData.title, props.modelValue)
   type.value = fieldMap[props.nodeData.form];
-  fieldValue.value = props.modelValue;
+  fieldValue.value = props.modelValue || (props.nodeData.multiple ? [] : '');
+  remoteUrl.value = ''
   switch (props.nodeData.form) {
     case 'select':
     case 'el-checkbox-group':
@@ -112,37 +117,73 @@ function checkData() {
   }
 }
 
-checkData();
-
 function change(val) {
+  console.log('--- field change: ', props.nodeData.name, val)
   emit('input', {name: props.nodeData.name, value: val})
 }
 function onFocus() {
   if (props.focus) props.focus(props.nodeData.form === 'input' ? props.nodeData.name : '');
 }
 
-function onVisibleChange(visible) {
-  if (visible && props.nodeData.form === 'select' && props.nodeData.valueUrl) {
-    if (store.state.options[optionKey.value]) {
-      options.value = store.state.options[optionKey.value];
-    } else {
-      const url = props.getFormatUrl && props.getFormatUrl(props.nodeData.valueUrl);
-      optionKey.value = url;
-      store.dispatch('fetchOptions', url);
+function getRemoteUrl(properties) {
+  const str = props.nodeData.valueUrl;
+  if (str.indexOf('(?)') === -1) return str;
+  const { appId } = store.state.spContext;
+  const arr = map(str.split('&'), (item, index) => {
+    let i = 0;
+    if (!index && item.indexOf('(?)') > -1) {
+      i = item.replace('(?)', '').lastIndexOf('?') + 1;
+    } 
+    const query = item.slice(i).split('=');
+    const key = query[0];
+    if (key === 'appId') {
+      return item.replace(`${key}=(?)`, `${key}=${appId}`)
+    } else if (has(properties, key)) {
+      return item.replace(`${key}=(?)`, `${key}=${properties[key]}`)
+    } else if (query[1] === '(?)') {
+      console.log(`【${props.nodeData.title}】远程请求地址${str}中的${key}未能解析到`);
     }
+    return item;
+  });
+  const url = arr.join('&');
+  console.log('--- remote url: ', url)
+  if (url.indexOf('(?)') === -1 && remoteUrl.value !== url) {
+    remoteUrl.value = url;
+    getRemoteOptions(url);
   }
 }
 
-watch(() => store.state.loading.options, (newValue, oldValue) => {
-  if (['select', 'el-checkbox-group'].includes(props.nodeData.form) && oldValue && !newValue) {
-    options.value = store.state.options[optionKey.value] || [];
-  }
-})
+function getRemoteOptions(url) {
+  loading.value = true;
+  NodeGroup.getOptions(url).then((res: any) => {
+    loading.value = false;
+    if (res.code === 200) {
+      options.value = res.data;
+    } else {
+      ElMessage({
+        type: 'error',
+        message: res.msg
+      })
+    }
+  })
+}
+
 watch(() => props.nodeData, (newValue, oldValue) => {
+  console.log('--- watch nodeData')
   checkData();
 })
 watch(() => props.modelValue, (newValue, oldValue) => {
   fieldValue.value = newValue
+})
+watch(() => props.properties, (newValue, oldValue) => {
+  if (props.nodeData.valueUrl && !remoteUrl.value) {
+    console.log('--- properties changed: ', newValue)
+    getRemoteUrl(newValue)
+  }
+})
+
+onMounted(() => {
+  checkData();
 })
 
 </script>
@@ -162,5 +203,10 @@ textarea{
     border: none;
     box-shadow: 0 0 0 1px #409eff inset;
   }
+}
+
+.sys-checkbox {
+  width: calc(25% - 30px);
+  font-weight: normal;
 }
 </style>

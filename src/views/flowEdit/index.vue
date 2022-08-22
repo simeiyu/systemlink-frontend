@@ -18,10 +18,12 @@
       <div class="v-line"></div>
       <!-- 设置 -->
       <el-button icon="Setting" text circle size="large"/>
+      <!-- 停止 -->
+      <el-button v-if="status==='running'" icon="VideoPause" text circle size="large" @click="handleTurnOff" />
       <!-- 测试 -->
-      <el-button icon="VideoPlay" text circle size="large"/>
+      <el-button v-else icon="VideoPlay" text circle size="large" @click="handleTurnOn" />
       <!-- 发布 -->
-      <el-button icon="Promotion" text circle size="large"/>
+      <el-button icon="Promotion" text circle size="large" />
       <!-- 清理 -->
       <el-button icon="Briefcase" text circle size="large" @click="clearCells" />
     </div>
@@ -77,6 +79,7 @@ import { onMounted, Ref, ref, createVNode, computed, provide, watch } from "vue"
 import { Graph, Addon, Rectangle, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
 import { get } from 'lodash';
+import { ElMessage } from 'element-plus';
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
 import choiceNode from "@/components/nodes/choiceNode.vue"
@@ -96,6 +99,7 @@ let curActive = ref(0);
 let nodeGroup = computed(() => store.state.nodeGroup);
 let activeNode:Ref<ActiveNode | null> = ref();
 let loading = computed<boolean>(() => store.state.loading.nodeGroup);
+let status = computed<string>(() => store.state.status);
 let canRedo = ref(true);
 let canUndo = ref(true);
 provide('activeNode', activeNode);
@@ -456,7 +460,17 @@ function initEditor() {
 function dropNode(evt: any, nodeData: any) {
   let node: Node | undefined;
   //判断节点类型 实现不同类型的节点添加到画布
-  const { processorType, name, icon } = nodeData;
+  const { processorType, name, icon, isTrigger } = nodeData;
+  if (isTrigger) {
+    const tiggerIndex = graph.getNodes().findIndex(item => item.getData().isTrigger);
+    if (tiggerIndex > -1) {
+      ElMessage({
+        type: 'warning',
+        message: '集成流中已有触发器组件'
+      })
+      return;
+    }
+  }
   switch (processorType) {
     case 'loop':
       node = graph.createNode({
@@ -467,8 +481,8 @@ function dropNode(evt: any, nodeData: any) {
         component: 'loopNode',
         zIndex: 1,
         data: {
+          name,
           kind: processorType,
-          name
         }
       });
       break;
@@ -497,8 +511,10 @@ function dropNode(evt: any, nodeData: any) {
         component: 'rectNode',
         zIndex: 3,
         data: {
+          name,
           kind: processorType,
-          name, icon
+          icon,
+          isTrigger
         }
       });
   }
@@ -535,6 +551,15 @@ function onSave() {
 function clearCells() {
   graph.clearCells();
   store.dispatch('clear')
+}
+
+// 启动
+function handleTurnOn() {
+  store.dispatch('turnOn')
+}
+// 停止
+function handleTurnOff() {
+  store.dispatch('turnOff')
 }
 
 watch(() => store.state.graphJson, () => {

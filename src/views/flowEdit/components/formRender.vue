@@ -10,7 +10,7 @@
       <div class="form-item" v-for="field in formConfig.properties" :key="field.name">
         <div class="label">{{ field.title || node.label }}</div>
         <div class="opt">
-          <field-factory :node-data="field" v-model="properties[field.name]" @input="updateProperties" :getFormatUrl="getFormatUrl"></field-factory>
+          <field-factory :node-data="field" v-model="properties[field.name]" :properties="properties" @input="updateProperties"></field-factory>
           <el-button class="set-btn"
                      size="default"
                      type="primary"
@@ -30,7 +30,7 @@
           <template
               v-if="field.extend&&field.extend[properties[field.name]]&&field.extend[properties[field.name]].position==='default'">
             <div class="opt" v-for="iField in field.extend[properties[field.name]].content">
-              <field-factory :node-data="iField" :key="iField.name" v-model="properties[iField.name]" @input="updateProperties" :getFormatUrl="getFormatUrl"></field-factory>
+              <field-factory :node-data="iField" :key="iField.name" v-model="properties[iField.name]" :properties="properties" @input="updateProperties"></field-factory>
             </div>
           </template>
         </template>
@@ -47,18 +47,21 @@
         </el-form-item>
       </el-form> -->
       <div class="dia-form">
-        <div class="form-line" v-for="field in dialogFormConfig">
-          <div class="sys-label">{{ field.title }}</div>
-          <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl" :focus="onFocus"></field-factory>
-          <div v-if="dialogForm[field.name]&&field.extend" class="form-line-sub">
-            <div v-for="subField in field.extend[dialogForm[field.name]].content"
+        <div class="sys-form-group" v-for="field in dialogFormConfig">
+          <div class="sys-label" :class="{'sys-label-table': field.form==='table'}">{{ field.title }}</div>
+          <field-factory :node-data="field" v-model="dialogForm[field.name]" :properties="dialogForm" @input="updateDialogForm" :focus="onFocus"></field-factory>
+          <div class="sys-form-sub" v-if="dialogForm[field.name]&&field.extend">
+            <div class="sys-form-group" v-for="subField in field.extend[dialogForm[field.name]].content"
               :key="subField.name"
+               :class="{'sys-field-table': subField.form==='table'}"
               >
               <div class="sys-label">{{ subField.title }}</div>
               <field-factory
                 :node-data="subField"
                 v-model="dialogForm[subField.name]"
-                @input="updateDialogForm" :getFormatUrl="getFormatUrl" :focus="onFocus"
+                :properties="dialogForm"
+                :focus="onFocus"
+                @input="updateDialogForm"
               >
               </field-factory>
             </div>
@@ -129,13 +132,14 @@ function getExtendData(modelData) {
   if (modelData.content) {
     dialogFormConfig.value = modelData.content
     modelData.content.forEach(item => {
-      _dialogForm[item.name] = properties.value[item.name] || '';
+      _dialogForm[item.name] = properties.value[item.name] || (item.multiple ? [] : '');
     })
   } else {
     dialogFormConfig.value = [modelData];
-    _dialogForm[modelData.name] = properties.value[modelData.name] || '';
+    _dialogForm[modelData.name] = properties.value[modelData.name] || (modelData.multiple ? [] : '');
   }
-  dialogForm.value = _dialogForm;
+  dialogForm.value = {...properties.value, ..._dialogForm};
+  console.log('--- dialogForm: ', dialogForm.value)
 }
 
 function onSubmit() {
@@ -149,27 +153,6 @@ function onSubmit() {
     properties: _properties,
     node: props.node
   });
-}
-
-function getFormatUrl(str) {
-  const { appId } = store.state.spContext
-  const arr = map(str.split('&'), (item, index) => {
-    let i = 0;
-    if (!index && item.indexOf('(?)') > -1) {
-      i = item.replace('(?)', '').lastIndexOf('?') + 1;
-    } 
-    const query = item.slice(i).split('=');
-    const key = query[0];
-    if (key === 'appId') {
-      return item.replace(`${key}=(?)`, `${key}=${appId}`)
-    } else if (has(properties.value, key)) {
-      return item.replace(`${key}=(?)`, `${key}=${properties.value[key]}`)
-    } else if (query[1] === '(?)') {
-      ElMessage.error(`未读取到"${key}"`);
-    }
-    return item;
-  });
-  return arr.join('&');
 }
 
 function onFocus(name) {
@@ -257,22 +240,29 @@ watch(() => props.node, (newValue) => {
 .dia-form {
   flex: 1 1 60%;
   margin-left: -1px;
-  // padding: 20px 20px 0 20px;
+  padding: 0 20px;
   border: 1px solid  var(--el-border-color-lighter);
   * {
     user-select: none !important;
 
   }
-  .form-line {
-    margin: 20px;
 
-    .sys-label {
-      color: var(--el-text-color-primary);
-      margin: 8px 0;
+  .sys-label {
+    color: var(--el-text-color-secondary);
+    margin: 8px 0;
+  }
+  .sys-form {
+    &-group {
+      margin: 20px 0;
+      &-sub {
+        border-top: 1px solid var(--el-border-color-extra-light);
+      }
     }
-    &-sub {
-      margin-top: 20px;
-      border-top: 1px solid var(--el-border-color-extra-light);
+  }
+  .sys-field-table {
+    position: relative;
+    > .sys-label {
+      position: absolute;
     }
   }
 }

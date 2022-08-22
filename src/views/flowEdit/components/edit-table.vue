@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="line-r">
-      <el-button type="primary" size="default" @click="addLine()">新增</el-button>
+      <el-button type="primary" size="small" @click="addLine()">新增</el-button>
     </div>
     <el-table :data="tableData" max-height="300">
       <el-table-column
@@ -13,7 +13,7 @@
       </el-table-column>
       <el-table-column label="操作" width="100">
         <template #default="scope">
-          <el-button type="primary" size="default" plain @click="deleteLine(scope.$index, scope.row)">删除</el-button>
+          <el-button type="danger" size="small" plain @click="deleteLine(scope.$index, scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, defineEmits, reactive } from "vue";
+import { defineEmits, reactive } from "vue";
 import { forEach } from "lodash";
 
 const emit = defineEmits(['change']);
@@ -37,7 +37,8 @@ const props = defineProps({
     type: Object,
     required: false,
     default: () => ({})
-  }
+  },
+  placeholder: String
 });
 let tableData = reactive(props.modelValue);
 function addLine() {
@@ -58,7 +59,8 @@ function onChange() {
 }
 </script>
 <style lang="less" scoped>
-.line-r{
+.line-r {
+  padding: 8px 0;
   text-align: right;
 }
 </style>

@@ -38,6 +38,14 @@ export class FlowRoute {
   static async save(param) {
     return request('/systemlink/integration/route', param, 'post')
   }
+  // 启动集成流
+  static async turnOn(param) {
+    return request('/systemlink/integration/route/turn_on_flow', param)
+  }
+  // 关闭集成流
+  static async turnOff(param) {
+    return request('/systemlink/integration/route/turn_off_flow', param)
+  }
 }
 
 /**

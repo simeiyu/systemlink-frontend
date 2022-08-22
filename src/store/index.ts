@@ -21,6 +21,7 @@ export const store = createStore<State>({
         nodeGroup: false,
         options: false,
       },
+      status: '',
       nodeGroup: [],
       options: {},
       transform: {
@@ -226,6 +227,9 @@ export const store = createStore<State>({
       } else {
         state.flowOut.transforms.push(transform);
       }
+    },
+    setStatus(state, payload) {
+      state.status = payload;
     }
   },
   actions: {
@@ -237,7 +241,7 @@ export const store = createStore<State>({
         const componentInfo = {};
         const nodeGroup = map(res.data, item => {
           const children = map(item.processorMetaVOList, proc => {
-            const { name, icon, description, processorType } = proc;
+            const { name, icon, description, processorType, isCustomExpressionMapper, isTrigger } = proc;
             componentInfo[processorType] = proc;
             if (proc.processorType === 'choice') {
               // 决策设置中有branches
@@ -250,7 +254,9 @@ export const store = createStore<State>({
               name,
               icon,
               description,
-              processorType
+              processorType,
+              isCustomExpressionMapper,
+              isTrigger,
             }
           });
           return {
@@ -337,6 +343,37 @@ export const store = createStore<State>({
         externalDataSource: []
       };
       state.graphJson = {};
+    },
+    // 启动集成流
+    turnOn({commit, state}, payload) {
+      const { appId, nodeId, userId } = state.spContext;
+      commit('setStatus', 'running');
+      FlowRoute.turnOn({appId, nodeId, userId}).then((res: any) => {
+        console.log('---- turn on: ', res);
+        if (res.code !== 200) {
+          commit('setStatus', '');
+          ElMessage({
+            type: 'error',
+            message: `启动失败：${res.msg}`
+          })
+        }
+      })
+    },
+    // 关闭集成流
+    turnOff({commit, state}, payload) {
+      const { appId, nodeId, userId } = state.spContext;
+      commit('setLoading', {key: 'turnOff', loading: true});
+      FlowRoute.turnOff({appId, nodeId, userId}).then((res: any) => {
+        console.log('---- turn off: ', res);
+        if (res.code === 200) {
+          commit('setStatus', '');
+        } else {
+          ElMessage({
+            type: 'error',
+            message: `关闭失败：${res.msg}`
+          })
+        }
+      })
     },
     // 请求转换方法列表
     fetchTransformList({commit}) {

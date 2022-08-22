@@ -58,5 +58,6 @@ export interface State {
   transform: {
     list: any[];
     [propName: string]: any
-  }
+  };
+  status: string;
 }
