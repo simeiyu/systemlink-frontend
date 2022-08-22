@@ -8,7 +8,13 @@
           v-for="row in tableConfig"
           :prop="row.name" :label="row.title">
         <template #default="scope">
-          <el-input size="default" v-model="scope.row[row.name]" :placeholder="row.title" @input="onChange"></el-input>
+          <!-- <el-input size="default" v-model="scope.row[row.name]" :placeholder="row.title" @input="onChange"></el-input> -->
+          <field-factory
+            :node-data="row"
+            v-model="scope.row[row.name]"
+            :properties="properties"
+            @input="({name, value}) => onChange(scope.row, name, value)"
+          />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="100">
@@ -21,8 +27,9 @@
 </template>
 
 <script lang="ts" setup>
-import { defineEmits, reactive } from "vue";
+import { defineEmits, reactive, watch } from "vue";
 import { forEach } from "lodash";
+import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 
 const emit = defineEmits(['change']);
 const props = defineProps({
@@ -38,7 +45,7 @@ const props = defineProps({
     required: false,
     default: () => ({})
   },
-  placeholder: String
+  properties: Object
 });
 let tableData = reactive(props.modelValue);
 function addLine() {
@@ -54,7 +61,9 @@ function deleteLine(index,val) {
   tableData.splice(index,1);
   onChange();
 }
-function onChange() {
+function onChange(row, name, value) {
+  if (!row) row = {};
+  row[name] = value;
   emit('change', tableData);
 }
 </script>

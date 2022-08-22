@@ -16,6 +16,7 @@
     loading-text="加载中"
     :type="nodeData.form === 'textArea' && 'textarea'"
     :rows="2"
+    :properties="properties"
   >
     <el-option
         v-if="type==='el-select'"
@@ -66,7 +67,8 @@ const fieldMap = {
   select: 'el-select',
   input: 'el-input',
   table: markRaw(EditTable),
-  datetime: markRaw(DatePicker),
+  datetime: 'el-date-picker',
+  // datetime: markRaw(DatePicker),
   "textArea":'el-input',
   "el-checkbox-group": 'el-checkbox-group',
 }
