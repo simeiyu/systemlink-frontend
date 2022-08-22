@@ -17,6 +17,7 @@
     :type="nodeData.form === 'textArea' && 'textarea'"
     :rows="2"
     :properties="properties"
+    :treeTable="nodeData.form === 'treeTable'"
   >
     <el-option
         v-if="type==='el-select'"
@@ -64,10 +65,11 @@ const props = defineProps({
   properties: Object
 });
 const fieldMap = {
-  select: 'el-select',
-  input: 'el-input',
-  table: markRaw(EditTable),
-  datetime: 'el-date-picker',
+  "select": 'el-select',
+  "input": 'el-input',
+  "table": markRaw(EditTable),
+  "treeTable": markRaw(EditTable),
+  "datetime": 'el-date-picker',
   // datetime: markRaw(DatePicker),
   "textArea":'el-input',
   "el-checkbox-group": 'el-checkbox-group',
@@ -106,7 +108,7 @@ function loadTableData() {
 function checkData() {
   console.log('--- checkData: ', props.nodeData.title, props.modelValue)
   type.value = fieldMap[props.nodeData.form];
-  fieldValue.value = props.modelValue || (props.nodeData.multiple ? [] : '');
+  fieldValue.value = props.modelValue || (props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form) ? [] : '');
   remoteUrl.value = ''
   switch (props.nodeData.form) {
     case 'select':

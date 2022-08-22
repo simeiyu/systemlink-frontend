@@ -132,11 +132,11 @@ function getExtendData(modelData) {
   if (modelData.content) {
     dialogFormConfig.value = modelData.content
     modelData.content.forEach(item => {
-      _dialogForm[item.name] = properties.value[item.name] || (item.multiple ? [] : '');
+      _dialogForm[item.name] = properties.value[item.name] || (item.multiple || ['treeTable', 'table'].includes(item.form) ? [] : '');
     })
   } else {
     dialogFormConfig.value = [modelData];
-    _dialogForm[modelData.name] = properties.value[modelData.name] || (modelData.multiple ? [] : '');
+    _dialogForm[modelData.name] = properties.value[modelData.name] || (modelData.multiple || ['treeTable', 'table'].includes(modelData.form) ? [] : '');
   }
   dialogForm.value = {...properties.value, ..._dialogForm};
   console.log('--- dialogForm: ', dialogForm.value)
