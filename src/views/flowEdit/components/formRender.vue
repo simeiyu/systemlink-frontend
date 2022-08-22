@@ -38,7 +38,7 @@
     </div>
   </div>
 
-  <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%">
+  <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%" custom-class="sys-dialog">
     <div class="dia-content">
       <Inputs @selectExpression="onSelectExpression" />
       <!-- <el-form :model="dialogForm" class="dia-form" label-position="top">
@@ -46,14 +46,16 @@
           <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
         </el-form-item>
       </el-form> -->
-      <div class="dia-form">
-        <div class="sys-form-group" v-for="field in dialogFormConfig">
-          <div class="sys-label" :class="{'sys-label-table': field.form==='table'}">{{ field.title }}</div>
-          <field-factory :node-data="field" v-model="dialogForm[field.name]" :properties="dialogForm" @input="updateDialogForm" :focus="onFocus"></field-factory>
+      <el-scrollbar height="500px" class="dia-form">
+        <div class="sys-padding-hori" v-for="field in dialogFormConfig">
+          <div :class="{'sys-form-group': field.form!=='table', 'sys-form-group-line': field.form==='input' || field.form==='select', 'sys-form-table': field.form==='table'}">
+            <div class="sys-label">{{ field.title }}</div>
+            <field-factory :node-data="field" v-model="dialogForm[field.name]" :properties="dialogForm" @input="updateDialogForm" :focus="onFocus"></field-factory>
+          </div>
           <div class="sys-form-sub" v-if="dialogForm[field.name]&&field.extend">
-            <div class="sys-form-group" v-for="subField in field.extend[dialogForm[field.name]].content"
+            <div v-for="subField in field.extend[dialogForm[field.name]].content"
               :key="subField.name"
-               :class="{'sys-field-table': subField.form==='table'}"
+               :class="{'sys-form-group': subField.form!=='table', 'sys-form-group-line': subField.form==='input' || subField.form==='select', 'sys-form-table': subField.form==='table'}"
               >
               <div class="sys-label">{{ subField.title }}</div>
               <field-factory
@@ -67,7 +69,17 @@
             </div>
           </div>
         </div>
-      </div>
+        <div class="sys-execute-wrapper" v-if="['rest', 'database'].includes(node.kind)">
+          <div class="sys-execute-action"><el-button @click="handleExecute" type="primary" plain size="small" :disabled="executing">
+            <el-icon v-if="executing"><Loading /></el-icon>
+            <el-icon v-else><VideoPlay /></el-icon>
+            <span style="margin-left: px">测试</span>
+          </el-button></div>
+          <div class="sys-execute">
+            <pre>{{execute}}</pre>
+          </div>
+        </div>
+      </el-scrollbar>
 
     </div>
     <template #footer>
@@ -78,11 +90,10 @@
 </template>
 
 <script lang="ts" setup>
-import { watch, ref, defineProps, inject } from "vue";
+import { watch, ref, defineProps, inject, computed } from "vue";
 import { useStore } from 'vuex';
-import { has, map, filter } from 'lodash';
+import { map, filter } from 'lodash';
 import { ActiveNode } from '@/store/type';
-import { ElMessage } from "element-plus";
 import { Graph } from '@antv/x6';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 import Inputs from '@/components/inputs.vue'
@@ -97,6 +108,8 @@ interface Props {
 
 const props = defineProps<Props>();
 let metaInfo = store.getters.getMetaInfo(props.node.kind);
+let execute = computed(() => store.state.execute ? JSON.stringify(store.state.execute, null, 4) : '');
+let executing = computed(() => store.state.loading.execute);
 let formConfig = ref(metaInfo);
 let properties = ref(store.getters.getProperties(props.node.id, props.node.parentId, props.node.grantId));
 //弹窗展示
@@ -153,6 +166,14 @@ function onSubmit() {
     properties: _properties,
     node: props.node
   });
+}
+
+function handleExecute() {
+  const _properties = {
+    ...properties.value,
+    ...dialogForm.value
+  }
+  store.dispatch('execute', {processorId: props.node.id, properties: JSON.stringify(_properties)});
 }
 
 function onFocus(name) {
@@ -240,29 +261,57 @@ watch(() => props.node, (newValue) => {
 .dia-form {
   flex: 1 1 60%;
   margin-left: -1px;
-  padding: 0 20px;
+  padding: 0;
   border: 1px solid  var(--el-border-color-lighter);
   * {
     user-select: none !important;
-
   }
 
   .sys-label {
     color: var(--el-text-color-secondary);
-    margin: 8px 0;
+    margin: 5px 0;
+  }
+  .sys-padding-hori {
+    padding: 0 20px;
   }
   .sys-form {
+    padding: 0 20px;
     &-group {
       margin: 20px 0;
-      &-sub {
-        border-top: 1px solid var(--el-border-color-extra-light);
+      &-line {
+        display: flex;
+        .sys-label {
+          flex: 0 0 80px;
+        }
+      }
+    }
+    &-sub {
+      border-top: 1px solid var(--el-border-color-extra-light);
+    }
+    &-table {
+      margin: 20px 0;
+      position: relative;
+      > .sys-label {
+        position: absolute;
       }
     }
   }
-  .sys-field-table {
-    position: relative;
-    > .sys-label {
-      position: absolute;
+  .sys-execute {
+    min-height: 50px;
+    padding: 8px 12px;
+    &-wrapper {
+      border-top: 1px solid var(--el-border-color-lighter);
+      background-color: var(--el-fill-color-lighter);
+    }
+    &-action {
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px 20px;
+      border-bottom: 1px dashed var(--el-border-color-lighter);
+    }
+    > pre {
+      margin: 0;
+      white-space: break-spaces;
     }
   }
 }

@@ -60,4 +60,5 @@ export interface State {
     [propName: string]: any
   };
   status: string;
+  execute?: any;
 }

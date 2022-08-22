@@ -49,7 +49,7 @@ export const store = createStore<State>({
     },
     getProcessor: (state) => (id) => {
       return find(state.flowOut.processors, {processorId: id});
-    }
+    },
   },
   mutations: {
     // 初始化获取到集成流json
@@ -230,6 +230,9 @@ export const store = createStore<State>({
     },
     setStatus(state, payload) {
       state.status = payload;
+    },
+    execute(state, payload) {
+      state.execute = payload;
     }
   },
   actions: {
@@ -389,5 +392,16 @@ export const store = createStore<State>({
         }
       })
     },
+    // 节点测试执行
+    execute({commit, state}, {processorId, properties}) {
+      const { appId } = state.spContext;
+      commit('setLoading', {key: "execute", loading: true});
+      ProcessorInstance.execute({
+        processorId, properties, appId
+      }).then((res: any) => {
+        commit('execute', res.data || res.msg)
+        commit('setLoading', {key: "execute", loading: false});
+      })
+    }
   }
 })

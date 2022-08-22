@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="数据转换" v-model="visible" destroy-on-close width="68%">
+  <el-dialog title="数据转换" v-model="visible" destroy-on-close width="68%" custom-class="sys-dialog">
     <el-space v-if="transform.properties && visible" class="sys-transform-properties" :size="40">
       <el-form-item label="转换名称" style="margin-bottom: 0">
         <el-input v-model="transform.properties.name" placeholder="输入转换名称" />

@@ -77,6 +77,10 @@ export class ProcessorInstance {
   static async delete(id) {
     return request('/systemlink/processorInstance', {processorId: id}, 'delete')
   }
+  // 测试执行，获取执行结果和响应结构(数据库组件、http请求组件)
+  static async execute(param) {
+    return request('/systemlink/integration/processor/database/execute', param, 'post')
+  }
 }
 
 export class Suanpan {
