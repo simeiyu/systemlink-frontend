@@ -106,7 +106,6 @@ function loadTableData() {
 
 //检查需要的类型
 function checkData() {
-  console.log('--- checkData: ', props.nodeData.title, props.modelValue)
   type.value = fieldMap[props.nodeData.form];
   fieldValue.value = props.modelValue || (props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form) ? [] : '');
   remoteUrl.value = ''

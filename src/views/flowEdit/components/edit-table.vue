@@ -6,7 +6,7 @@
     <el-table
       cell-class-name="sys-table-cell"
       :data="tableData"
-      max-height="300"
+      max-height="360"
       empty-text="暂无数据"
       default-expand-all
       row-key="rowKey"

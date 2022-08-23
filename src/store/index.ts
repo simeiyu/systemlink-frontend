@@ -352,7 +352,6 @@ export const store = createStore<State>({
       const { appId, nodeId, userId } = state.spContext;
       commit('setStatus', 'running');
       FlowRoute.turnOn({appId, nodeId, userId}).then((res: any) => {
-        console.log('---- turn on: ', res);
         if (res.code !== 200) {
           commit('setStatus', '');
           ElMessage({
@@ -384,6 +383,27 @@ export const store = createStore<State>({
         commit('setTransformList', res.data);
       })
     },
+    // 保存转换方法
+    saveTransform({commit, state}, payload) {
+      store.commit('updateTransforms', payload);
+      const { nodeId } = state.spContext;
+      const { processorId, transformId, properties, output } = payload;
+      Transform.saveItem({
+        nodeId,
+        processorId,
+        transformId,
+        "properties": JSON.stringify(properties),
+        "output": JSON.stringify(output),
+        "name": payload.properties.name,
+        "transformType": payload.properties.type,
+      }).then((res: any) => {
+        if (res.code === 200) {
+          ElMessage.success(`数据转换保存成功`)
+        } else {
+          ElMessage.error(`数据转换保存失败：${res.msg}`)
+        }
+      })
+    },
     // 保存画布节点输出信息
     saveProcessor({commit}, payload) {
       ProcessorInstance.save(payload).then((res: any) => {
@@ -393,12 +413,10 @@ export const store = createStore<State>({
       })
     },
     // 节点测试执行
-    execute({commit, state}, {processorId, properties}) {
+    execute({commit, state}, {processorType, processorId, properties}) {
       const { appId } = state.spContext;
       commit('setLoading', {key: "execute", loading: true});
-      ProcessorInstance.execute({
-        processorId, properties, appId
-      }).then((res: any) => {
+      ProcessorInstance.execute(processorType, { processorId, properties, appId }).then((res: any) => {
         commit('execute', res.data || res.msg)
         commit('setLoading', {key: "execute", loading: false});
       })

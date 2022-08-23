@@ -1,7 +1,8 @@
 <template>
   <div class="sys-inputs-wrapper">
     <h4 class="sys-inputs-title">输入数据</h4>
-    <el-scrollbar height="320px" class="sys-inputs">
+    <el-skeleton v-if="loading" style="padding: 20px" :rows="5" animated />
+    <el-scrollbar height="460px" class="sys-inputs">
       <el-tree
         ref="treeRef"
         node-key="id"
@@ -25,12 +26,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, inject, reactive, defineEmits } from 'vue'
+import { ref, watch, inject, reactive, defineEmits, computed } from 'vue'
 import { useStore } from 'vuex'
-import { isEmpty, map } from 'lodash'
+import { isEmpty, map, get } from 'lodash'
 import { ElTree } from 'element-plus'
 import type Node from 'element-plus/es/components/tree/src/model/node'
-import { ProcessorInstance } from '@/api/api'
+import { ProcessorInstance, Transform } from '@/api/api'
 
 const store = useStore();
 const activeNode = inject('activeNode');
@@ -46,8 +47,8 @@ interface Tree {
   type?: string;
 }
 let data = reactive<Tree[]>([]);
-
-const treeRef = ref<InstanceType<typeof ElTree>>()
+let loading = ref(false);
+const treeRef = ref<InstanceType<typeof ElTree>>();
 
 function getTransformChildren(id) {
   return map(store.getters.getInputTransforms(id), item => ({
@@ -78,11 +79,29 @@ function getTreeData() {
       icon: 'Plus',
       click: openTransform
     },
-    children: getTransformChildren(activeNode.value.id),
+    children: []
+    // children: getTransformChildren(activeNode.value.id),
   })
   return data;
 }
 
+function loopUpstream(data) {
+  return map(Object.keys(data), key => {
+    const { title, type, expression, properties } = data[key];
+    const item = {
+      id: key,
+      label: title,
+      type: type,
+      expression: expression,
+      hasChildren: false
+    }
+    if (!isEmpty(properties)) {
+      item.children = loopUpstream(properties);
+      item.hasChildren = true;
+    }
+    return item
+  })
+}
 // 处理上游节点到tree
 function getUpstream(list) {
   if (isEmpty(list)) return [];
@@ -90,22 +109,7 @@ function getUpstream(list) {
     const output = JSON.parse(item.output);
     let children: Tree[] = [];
     if (output) {
-      children = map(Object.keys(output), key => {
-        const sub = output[key];
-        return {
-          id: key,
-          label: sub.title,
-          type: sub.type,
-          expression: sub.expression,
-          children: map(Object.keys(sub.properties), id => ({
-            id: id,
-            label: sub.properties[id].title,
-            type: sub.properties[id].type,
-            expression: sub.properties[id].expression,
-            leaf: true
-          }))
-        }
-      })
+      children = loopUpstream(output);
     }
     return {
       id: item.processorId,
@@ -116,16 +120,53 @@ function getUpstream(list) {
 }
 
 const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
+  if (!activeNode.value) resolve([])
   if (node.level === 0) {
+    loading.value = true;
     const rootTree = getTreeData();
-    ProcessorInstance.getUpstream(node.id).then((res: any) => {
+    ProcessorInstance.getUpstream(activeNode.value.id).then((res: any) => {
       const upstream = res ? getUpstream(res.data) : [];
       rootTree.push(...upstream);
+      loading.value = false;
       resolve(rootTree)
     })
   } else if (node.data.id === '222') {
-    const currentTransforms = getTransformChildren(activeNode.value.id);
-    return resolve(currentTransforms);
+    // const currentTransforms = getTransformChildren(activeNode.value.id);
+    // const upstream = res ? getUpstream(res.data) : [];
+    // rootTree.push(...upstream);
+    // resolve(rootTree)
+    Transform.getTransforms(activeNode.value.id).then((res: any) => {
+      console.log('--- res: ', res)
+      let transformList: Tree[] = [];
+      if (res.data) {
+        transformList = map(res.data, item => {
+          const { currentProcessor, properties, output, transformId, processorId, transformType, name } = item;
+          store.commit('updateTransforms', {
+            processorId,
+            transformId,
+            properties: JSON.parse(properties),
+            output: JSON.parse(output),
+          });
+          return {
+            id: transformId,
+            label: name,
+            action: {
+              icon: 'Setting',
+              click: openTransform
+            },
+            transform: {
+              transformId,
+              processorId,
+              transformType,
+              currentProcessor,
+            },
+            leaf: true
+          }
+        });
+      }
+      return resolve(transformList)
+    })
+    // return resolve(currentTransforms);
   } else if (node.data.children) {
     return resolve(node.data.children)
   } else {

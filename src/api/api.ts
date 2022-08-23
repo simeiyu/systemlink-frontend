@@ -59,6 +59,15 @@ export class Transform {
   static async getList() {
     return request('systemlink/transformMeta/list')
   }
+  // 查询当前节点下的数据转换列表
+  static async getTransforms(id) {
+    return request('/systemlink/transformInstance/findList', {processorId: id})
+  }
+  // 保存数据转换输出信息
+  static async saveItem(param) {
+    return request('/systemlink/transformInstance', param, 'post')
+  }
+
 }
 
 /**
@@ -77,9 +86,9 @@ export class ProcessorInstance {
   static async delete(id) {
     return request('/systemlink/processorInstance', {processorId: id}, 'delete')
   }
-  // 测试执行，获取执行结果和响应结构(数据库组件、http请求组件)
-  static async execute(param) {
-    return request('/systemlink/integration/processor/database/execute', param, 'post')
+  // 测试执行，获取执行结果和响应结构(数据库组件-database、http请求组件-rest)
+  static async execute(processorType, param) {
+    return request(`/systemlink/integration/processor/${processorType}/execute`, param, 'post')
   }
 }
 

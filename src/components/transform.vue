@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="数据转换" v-model="visible" destroy-on-close width="68%" custom-class="sys-dialog">
+  <el-dialog title="数据转换" v-model="visible" destroy-on-close width="68%" custom-class="sys-dialog" @closed="onDialogClosed">
     <el-space v-if="transform.properties && visible" class="sys-transform-properties" :size="40">
       <el-form-item label="转换名称" style="margin-bottom: 0">
         <el-input v-model="transform.properties.name" placeholder="输入转换名称" />
@@ -17,13 +17,22 @@
     </el-space>
     <div class="sys-transform-wrapper">
       <Inputs @selectExpression="onSelectExpression" />
-      <div class="sys-transform-metaInfo">
-        <el-form v-if="metaInfo" :model="transform.properties">
-          <el-form-item v-for="prop in metaInfo.properties" :key="prop.name" :label="prop.title">
+      <el-scrollbar height="500px" class="sys-transform-metaInfo">
+        <div class="sys-form" v-if="metaInfo">
+          <div
+            v-for="prop in metaInfo.properties"
+            :key="prop.name"
+            :class="{
+              'sys-form-group': prop.form!=='table',
+              'sys-form-group-line': prop.form==='input' || prop.form==='select',
+              'sys-form-table': prop.form==='table'
+            }"
+          >
+            <div class="sys-label">{{ prop.title }}</div>
             <field-factory :node-data="prop" v-model="transform.properties[prop.name]" @input="updateProperties" :focus="onFocus" />
-          </el-form-item>
-        </el-form>
-      </div>
+          </div>
+        </div>
+      </el-scrollbar>
     </div>
     <template #footer>
       <el-button @click="onCancel">取 消</el-button>
@@ -35,8 +44,7 @@
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
 import { useStore } from 'vuex';
-import { ElDivider } from 'element-plus'
-import { find } from 'lodash'
+import { find } from 'lodash';
 import Inputs from '@/components/inputs.vue'
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 
@@ -61,6 +69,9 @@ let metaInfo = ref<MetaInfo | null>()
 // 处于焦点中的输入框
 let focusInputName = ref('')
 
+watch(() => store.state.transform.visible, (value) => {
+console.log('--- transform visible: ', value)
+})
 watch(() => store.state.transform.edit, (value) => {
   if (value) {
     transform.value = value;
@@ -72,7 +83,7 @@ watch(() => store.state.transform.edit, (value) => {
     transform.value = {};
     metaInfo.value = null;
   }
-  console.log('--- transform metaInfo: ', metaInfo.value)
+  console.log('--- transform metaInfo: ', transform.value, metaInfo.value)
 })
 
 function onTypeChange(val) {
@@ -96,11 +107,14 @@ function onSelectExpression(exp: string) {
 
 function onSubmit() {
   console.log('--- submit transform: ', transform.value)
-  store.commit('updateTransforms', transform.value);
+  store.dispatch('saveTransform', transform.value);
   store.commit('setTransform', {visible: false});
 }
 
 function onCancel() {
+  store.commit('setTransform', {visible: false});
+}
+function onDialogClosed() {
   store.commit('setTransform', {visible: false});
 }
 </script>
@@ -116,8 +130,36 @@ function onCancel() {
     &-metaInfo {
       flex: 1 1 60%;
       margin-left: -1px;
-      padding: 20px;
       border: 1px solid  var(--el-border-color-lighter);
+    }
+  }
+  .sys-label {
+    color: var(--el-text-color-secondary);
+    margin: 5px 0;
+  }
+  .sys-padding-hori {
+    padding: 0 20px;
+  }
+  .sys-form {
+    padding: 0 20px;
+    &-group {
+      margin: 20px 0;
+      &-line {
+        display: flex;
+        .sys-label {
+          flex: 0 0 100px;
+        }
+      }
+    }
+    &-sub {
+      border-top: 1px solid var(--el-border-color-extra-light);
+    }
+    &-table {
+      margin: 20px 0;
+      position: relative;
+      > .sys-label {
+        position: absolute;
+      }
     }
   }
 </style>

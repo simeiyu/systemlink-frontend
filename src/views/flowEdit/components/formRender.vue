@@ -38,14 +38,9 @@
     </div>
   </div>
 
-  <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%" custom-class="sys-dialog">
+  <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%" custom-class="sys-dialog" @closed="onDialogClosed">
     <div class="dia-content">
       <Inputs @selectExpression="onSelectExpression" />
-      <!-- <el-form :model="dialogForm" class="dia-form" label-position="top">
-        <el-form-item v-for="field in dialogFormConfig">
-          <field-factory :node-data="field" v-model="dialogForm[field.name]" @input="updateDialogForm" :getFormatUrl="getFormatUrl"></field-factory>
-        </el-form-item>
-      </el-form> -->
       <el-scrollbar height="500px" class="dia-form">
         <div class="sys-padding-hori" v-for="field in dialogFormConfig">
           <div :class="{'sys-form-group': field.form!=='table', 'sys-form-group-line': field.form==='input' || field.form==='select', 'sys-form-table': field.form==='table'}">
@@ -156,7 +151,6 @@ function getExtendData(modelData) {
 }
 
 function onSubmit() {
-  dialogFormVisible.value = false;
   const _properties = {
     ...properties.value,
     ...dialogForm.value
@@ -166,6 +160,13 @@ function onSubmit() {
     properties: _properties,
     node: props.node
   });
+  dialogFormVisible.value = false;
+}
+
+function onDialogClosed() {
+  console.log('--- dialog closed')
+  // database 和rest 组件的弹窗关闭时，execute 置空
+  if (['database', 'rest'].includes(props.node.kind)) store.state.execute = '';
 }
 
 function handleExecute() {
@@ -173,7 +174,11 @@ function handleExecute() {
     ...properties.value,
     ...dialogForm.value
   }
-  store.dispatch('execute', {processorId: props.node.id, properties: JSON.stringify(_properties)});
+  store.dispatch('execute', {
+    processorType: props.node.kind,
+    processorId: props.node.id,
+    properties: JSON.stringify(_properties)
+  });
 }
 
 function onFocus(name) {
