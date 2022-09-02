@@ -76,7 +76,7 @@
 
 <script lang="ts" setup>
 import { onMounted, Ref, ref, createVNode, computed, provide, watch } from "vue";
-import { Graph, Addon, Rectangle, Shape, Dom, Node } from '@antv/x6';
+import { Graph, Addon, Edge, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
 import { get } from 'lodash';
 import { ElMessage } from 'element-plus';
@@ -248,11 +248,11 @@ function initEditor() {
         })
       }
     },
-    // resizing: {
-    //   enabled: true,
-    //   minWidth: 90,
-    //   minHeight: 90,
-    // },
+    resizing: {
+      enabled: true,
+      minWidth: 90,
+      minHeight: 90,
+    },
     snapline: true,
     clipboard: true,
   });
@@ -414,8 +414,9 @@ function initEditor() {
       activeNode.value = null;
     }
   });
+  
+  // 节点被删除
   graph.on('node:removed', ({node}) => {
-    // 节点被删除
     const item: ActiveNode = {id: node.id, name: get(node, 'data.name', ''), kind: get(node, 'data.kind'), parentId: node.getParentId()};
     if (item.parentId) {
       item.grantId = node.parent?.getParentId();
@@ -451,6 +452,33 @@ function initEditor() {
     if (cells.length) {
       graph.removeCells(cells)
     }
+  })
+
+  // 节点移动后
+  graph.on('node:moved',() => {
+    // 保存
+    onSave()
+  })
+  // 连线增加后
+  graph.on('edge:added', ({ edge }) => {
+    console.log('--- edge added: ', edge.target.cell)
+    // 更新下游节点的sourceProcessorId
+    const targetCell = graph.getCellById(edge.target.cell)
+    const targetData = targetCell.getData()
+    const { nodeId } = store.state.spContext;
+    const processorId = targetCell.id
+    const parentId = targetCell.getParentId()
+    const properties = store.getters.getProperties(processorId, parentId, grantId);
+    // 保存画布节点输出信息
+    store.dispatch('saveProcessor', {
+      nodeId,
+      parentProcessorId: parentId,
+      sourceProcessorId: edge.source.cell,
+      processorId,
+      processorType: targetData.kind,
+      properties: JSON.stringify(properties),
+      output: ''
+    })
   })
   
   canRedo.value = graph.history.canRedo();

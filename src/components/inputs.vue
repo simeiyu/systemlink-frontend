@@ -1,9 +1,9 @@
 <template>
   <div class="sys-inputs-wrapper">
     <h4 class="sys-inputs-title">输入数据</h4>
-    <el-skeleton v-if="loading" style="padding: 20px" :rows="5" animated />
     <el-scrollbar height="460px" class="sys-inputs">
       <el-tree
+        v-loading="loading"
         ref="treeRef"
         node-key="id"
         :data="data"
@@ -131,10 +131,6 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
       resolve(rootTree)
     })
   } else if (node.data.id === '222') {
-    // const currentTransforms = getTransformChildren(activeNode.value.id);
-    // const upstream = res ? getUpstream(res.data) : [];
-    // rootTree.push(...upstream);
-    // resolve(rootTree)
     Transform.getTransforms(activeNode.value.id).then((res: any) => {
       console.log('--- res: ', res)
       let transformList: Tree[] = [];

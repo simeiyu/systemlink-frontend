@@ -191,24 +191,23 @@ function onSelectExpression(exp: string) {
   }
 }
 
-function getUpstreamProcessorId() {
-  if (!graph || !props.node) return '';
-  const { id, parentId } = props.node;
-  if (parentId) return parentId;
-  const edges = graph.getEdges();
-  const upstreams = map(filter(edges, edge => edge.target.cell === id), edge => edge.source.cell);
-  return upstreams[0];
+function getUpstreamProcessorId(id) {
+  if (!graph || !props.node) return null;
+  const edges = filter(graph.getEdges(), edge => edge.target.cell === id);
+  const upstreams = map(edges, edge => edge.source.cell);
+  return upstreams ? upstreams[0] : null;
 }
 function onSave() {
-  const upStreamProcessorId = getUpstreamProcessorId();
   const { nodeId } = store.state.spContext;
-  const { id, kind } = props.node;
+  const { id, kind, parentId } = props.node;
+  const upStreamProcessorId = getUpstreamProcessorId(id);
   // 保存画布全部信息
   props.save && props.save();
   // 保存画布节点输出信息
   store.dispatch('saveProcessor', {
     nodeId,
-    parentProcessorId: upStreamProcessorId,
+    parentProcessorId: parentId,
+    sourceProcessorId: upStreamProcessorId,
     processorId: id,
     processorType: kind,
     properties: JSON.stringify(properties.value),
