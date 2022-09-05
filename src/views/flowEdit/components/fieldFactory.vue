@@ -69,8 +69,8 @@ const fieldMap = {
   "input": 'el-input',
   "table": markRaw(EditTable),
   "treeTable": markRaw(EditTable),
-  "datetime": 'el-date-picker',
-  // datetime: markRaw(DatePicker),
+  // "datetime": 'el-date-picker',
+  datetime: markRaw(DatePicker),
   "textArea":'el-input',
   "el-checkbox-group": 'el-checkbox-group',
 }
@@ -131,7 +131,7 @@ function onFocus() {
 function getRemoteUrl(properties) {
   const str = props.nodeData.valueUrl;
   if (str.indexOf('(?)') === -1) return str;
-  const { appId } = store.state.spContext;
+  const appId = store.getters['context/appId']();
   const arr = map(str.split('&'), (item, index) => {
     let i = 0;
     if (!index && item.indexOf('(?)') > -1) {

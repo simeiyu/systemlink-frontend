@@ -3,7 +3,7 @@
     <h4 class="sys-node-name">节点信息</h4>
     <div class="sys-node-body">
     <el-form-item label="名称" label-width="40">
-      <el-input v-model="node.name" placeholder="节点名称" @change="updateName"></el-input>
+      <el-input v-model="node.name" placeholder="节点名称" @blur="updateName"></el-input>
     </el-form-item>
     <el-button style="margin-left: 40px" type="danger" :disabled="node.kind === 'otherwise'" plain icon="Delete" @click="deleteNode">删除节点</el-button>
     </div>

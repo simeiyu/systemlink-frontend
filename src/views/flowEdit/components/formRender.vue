@@ -98,32 +98,32 @@ const graph: Graph | undefined = inject('graph');
 
 interface Props {
   node: ActiveNode;
-  save: Function;
 }
 
 const props = defineProps<Props>();
-let metaInfo = store.getters.getMetaInfo(props.node.kind);
-let execute = computed(() => store.state.execute ? JSON.stringify(store.state.execute, null, 4) : '');
-let executing = computed(() => store.state.loading.execute);
+let metaInfo = store.getters['components/metaInfo'](props.node.kind);
+let execute = computed(() => store.state.graph.execute ? JSON.stringify(store.state.graph.execute, null, 4) : '');
+let executing = computed(() => store.state.graph.loading.execute);
 let formConfig = ref(metaInfo);
-let properties = ref(store.getters.getProperties(props.node.id, props.node.parentId, props.node.grantId));
+let properties = ref(store.getters['graph/properties'](props.node.id));
 //弹窗展示
 let dialogForm = ref({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
 // 处于焦点中的输入框
 let focusInputName = ref('')
+let sourceId = ref('')
 
 function updateProperties({name, value}) {
-  properties[name] = value;
   const _properties = {
     ...properties.value,
     [`${name}`]: value
   }
   properties.value = _properties;
-  store.dispatch('setProperties', {
+  console.log('--- input: ', _properties)
+  store.dispatch('graph/setProperties', {
     properties: _properties,
-    node: props.node
+    node: {...props.node, sourceId: sourceId.value}
   })
 }
 function updateDialogForm({name, value}) {
@@ -156,9 +156,10 @@ function onSubmit() {
     ...dialogForm.value
   }
   properties.value = _properties;
-  store.dispatch('setProperties', {
+  const sourceId = getUpstreamProcessorId(props.node.id);
+  store.dispatch('graph/setProperties', {
     properties: _properties,
-    node: props.node
+    node: {...props.node, sourceId}
   });
   dialogFormVisible.value = false;
 }
@@ -174,7 +175,7 @@ function handleExecute() {
     ...properties.value,
     ...dialogForm.value
   }
-  store.dispatch('execute', {
+  store.dispatch('graph/execute', {
     processorType: props.node.kind,
     processorId: props.node.id,
     properties: JSON.stringify(_properties)
@@ -198,26 +199,16 @@ function getUpstreamProcessorId(id) {
   return upstreams ? upstreams[0] : null;
 }
 function onSave() {
-  const { nodeId } = store.state.spContext;
-  const { id, kind, parentId } = props.node;
-  const upStreamProcessorId = getUpstreamProcessorId(id);
-  // 保存画布全部信息
-  props.save && props.save();
+  const { id, parentId } = props.node;
+  const sourceId = getUpstreamProcessorId(id);
   // 保存画布节点输出信息
-  store.dispatch('saveProcessor', {
-    nodeId,
-    parentProcessorId: parentId,
-    sourceProcessorId: upStreamProcessorId,
-    processorId: id,
-    processorType: kind,
-    properties: JSON.stringify(properties.value),
-    output: ''
-  })
+  store.dispatch('graph/saveProcessor', {parentId, sourceId, processorId: id})
 }
 
 watch(() => props.node, (newValue) => {
-  formConfig.value = store.getters.getMetaInfo(newValue.kind);
-  properties.value = store.getters.getProperties(newValue.id, newValue.parentId, newValue.grantId);
+  formConfig.value = store.getters['components/metaInfo'](newValue.kind);
+  properties.value = store.getters['graph/properties'](newValue.id);
+  sourceId.value = getUpstreamProcessorId(newValue.id);
 })
 
 </script>

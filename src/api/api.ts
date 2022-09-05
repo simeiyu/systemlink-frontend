@@ -79,6 +79,10 @@ export class ProcessorInstance {
     return request('/systemlink/processorInstance/findParent', {processorId: id})
   }
   // 保存画布节点输出信息
+  static async get(id) {
+    return request('/systemlink/processorInstance', {processorId: id}, 'get')
+  }
+  // 保存画布节点输出信息
   static async save(params) {
     return request('/systemlink/processorInstance', params, 'post')
   }
@@ -94,6 +98,6 @@ export class ProcessorInstance {
 
 export class Suanpan {
   static async getContext() {
-    return request('/sp/context/get')
+    return request('/sp/context')
   }
 }

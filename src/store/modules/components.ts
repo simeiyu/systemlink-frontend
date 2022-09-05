@@ -18,11 +18,12 @@ export default {
     nodeGroup: [],       // 组件栏列表：去掉metaInfo的组件列表
   }),
   getters: {
-    getMetaInfo: (state) => (kind) => {
+    metaInfo: (state) => (kind) => {
       const metaInfo = get(state.componentInfo, `${kind}.metaInfo`, '');
       console.log('--- node metaInfo: ', typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo))
       return typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo);
     },
+    getByType: (state) => (type) => state.componentInfo[type],
   },
   mutations: {
     // 组件栏列表
@@ -36,7 +37,7 @@ export default {
   },
   actions: {
     // 获取组件列表（元数据）
-    fetchComponents({commit, state}) {
+    fetchList({commit, state}) {
       state.loading = true;
       commit('setNodeGroup', []);
       NodeGroup.getGroupList({}).then((res: any) => {

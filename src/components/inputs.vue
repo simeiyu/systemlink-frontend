@@ -50,19 +50,6 @@ let data = reactive<Tree[]>([]);
 let loading = ref(false);
 const treeRef = ref<InstanceType<typeof ElTree>>();
 
-function getTransformChildren(id) {
-  return map(store.getters.getInputTransforms(id), item => ({
-      id: item.transformId,
-      label: item.properties.name,
-      action: {
-        icon: 'Setting',
-        click: openTransform
-      },
-      transform: item,
-      leaf: true
-    }))
-}
-
 function getTreeData() {
   const data: Tree[] = [];
   // 项目参数
@@ -80,7 +67,6 @@ function getTreeData() {
       click: openTransform
     },
     children: []
-    // children: getTransformChildren(activeNode.value.id),
   })
   return data;
 }
@@ -137,7 +123,7 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
       if (res.data) {
         transformList = map(res.data, item => {
           const { currentProcessor, properties, output, transformId, processorId, transformType, name } = item;
-          store.commit('updateTransforms', {
+          store.commit('transform/update', {
             processorId,
             transformId,
             properties: JSON.parse(properties),
@@ -162,7 +148,6 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
       }
       return resolve(transformList)
     })
-    // return resolve(currentTransforms);
   } else if (node.data.children) {
     return resolve(node.data.children)
   } else {
@@ -172,7 +157,7 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
 
 function openTransform (node, data) {
   const transformId = data.id !== '222' ? data.id : null;
-  store.commit('setTransform', {visible: true, transformId, processorId: activeNode.value.id})
+  store.commit('transform/openModal', {visible: true, transformId, processorId: activeNode.value.id})
 }
 function handleNodeClick (node: Tree) {
   if (node.expression) {
@@ -182,9 +167,7 @@ function handleNodeClick (node: Tree) {
 function handleExpand (data: Tree) {
   // console.log('--- expand: ', data)
 }
-watch(() => store.state.flowOut.transforms, () => {
 
-})
 const TreeProps = {
   children: 'children',
   label: 'label',

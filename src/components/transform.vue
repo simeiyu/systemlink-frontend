@@ -36,7 +36,7 @@
     </div>
     <template #footer>
       <el-button @click="onCancel">取 消</el-button>
-      <el-button type="primary" @click="onSubmit">确 定</el-button>
+      <el-button type="primary" @click="onSubmit" :disabled="saving"><el-icon v-if="saving"><Loading /></el-icon>确 定</el-button>
     </template>
   </el-dialog>
 </template>
@@ -59,7 +59,7 @@ interface MetaInfo {
 
 const store = useStore();
 // 是否显示弹窗
-let visible:boolean = computed(() => store.state.transform.visible);
+let visible:boolean = computed(() => store.state.transform.modal.visible);
 // 编辑的tranform
 let transform = ref<Transform>({});
 // transform 元数据列表
@@ -68,11 +68,18 @@ let list = computed(() => store.state.transform.list);
 let metaInfo = ref<MetaInfo | null>()
 // 处于焦点中的输入框
 let focusInputName = ref('')
+let saving = computed(() => store.state.transform.saving);
 
-watch(() => store.state.transform.visible, (value) => {
+watch(() => store.state.transform.modal.visible, (value) => {
 console.log('--- transform visible: ', value)
 })
-watch(() => store.state.transform.edit, (value) => {
+watch(() => store.state.transform.saving, (newVal, val) => {
+ if (!newVal && val) {
+  // 保存成功
+  store.dispatch('graph/save')
+ }
+})
+watch(() => store.state.transform.modal.transform, (value) => {
   if (value) {
     transform.value = value;
     if (value.properties.type) {
@@ -107,15 +114,15 @@ function onSelectExpression(exp: string) {
 
 function onSubmit() {
   console.log('--- submit transform: ', transform.value)
-  store.dispatch('saveTransform', transform.value);
-  store.commit('setTransform', {visible: false});
+  store.dispatch('transform/save', transform.value);
+  store.commit('transform/openModal', {visible: false});
 }
 
 function onCancel() {
-  store.commit('setTransform', {visible: false});
+  store.commit('transform/openModal', {visible: false});
 }
 function onDialogClosed() {
-  store.commit('setTransform', {visible: false});
+  store.commit('transform/openModal', {visible: false});
 }
 </script>
 

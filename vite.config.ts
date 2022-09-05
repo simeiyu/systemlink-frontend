@@ -61,7 +61,7 @@ export default defineConfig({
             },
             '/sp': {
               changeOrigin: true,
-              target: 'http://localhost:3002/'
+              target: 'http://localhost:3003/'
             },
         },
     },
