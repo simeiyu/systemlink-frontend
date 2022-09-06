@@ -3,6 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { ElMessage } from 'element-plus';
 import { Transform } from '@/api/api';
 
+export interface Transformer {
+  transformId: string;
+  processorId: string;
+  properties: any[];
+  output: {};
+}
+
 export default {
   namespaced: true,
   state: () => ({  
@@ -72,6 +79,9 @@ export default {
         commit('setList', res.data);
       })
     },
+    setTransforms({commit}, payload) {
+      commit('setTransforms', payload)
+    },
     // 保存转换方法
     save({commit, state, rootGetters}, payload) {
       commit('update', payload);
@@ -82,10 +92,10 @@ export default {
         nodeId,
         processorId,
         transformId,
-        "properties": JSON.stringify(properties),
-        "output": JSON.stringify(output),
-        "name": payload.properties.name,
-        "transformType": payload.properties.type,
+        properties: JSON.stringify(properties),
+        output: JSON.stringify(output),
+        name: payload.properties.name,
+        transformType: payload.properties.type,
       }).then((res: any) => {
         if (res.code === 200) {
           ElMessage.success(`数据转换保存成功`)

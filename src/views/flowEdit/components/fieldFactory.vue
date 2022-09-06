@@ -70,7 +70,7 @@ const fieldMap = {
   "table": markRaw(EditTable),
   "treeTable": markRaw(EditTable),
   // "datetime": 'el-date-picker',
-  datetime: markRaw(DatePicker),
+  "datetime": markRaw(DatePicker),
   "textArea":'el-input',
   "el-checkbox-group": 'el-checkbox-group',
 }

@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { defineProps } from 'vue'; 
-import { ActiveNode } from '@/store/type';
+import { ActiveNode } from '@/store/modules/graph';
 
 interface Props {
   node: ActiveNode;
@@ -26,8 +26,8 @@ function deleteNode () {
   props.delete && props.delete(props.node)
 }
 
-function updateName(val) {
-  props.updateName && props.updateName(val)
+function updateName(e) {
+  props.updateName({...props.node})
 }
 
 </script>

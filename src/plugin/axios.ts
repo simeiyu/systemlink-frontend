@@ -10,11 +10,16 @@ axios.defaults.timeout = 60000;
 // @ts-ignore
 axios.defaults.baseURL = config.baseurl;
 
+axios.defaults.withCredentials = true;
+axios.defaults.headers['Cookie'] = 'sp.sid=s%3APZoqi9iB1e5X32-ZUEfoM-RQ-1z3DQ05.v%2Br%2FUUPEfvF9Sks0ybJTaiTHs4Rmc%2BHeyhG3Mebq3k4; Path=/; Expires=Thu, 02 Dec 2022 01:58:34 GMT; HttpOnly'
+
 //http request 拦截器
 axios.interceptors.request.use(
     config => {
         // 配置请求头
         config.headers = {
+          // withCredentials: true,
+          // cookie: 'sp.sid=s%3APZoqi9iB1e5X32-ZUEfoM-RQ-1z3DQ05.v%2Br%2FUUPEfvF9Sks0ybJTaiTHs4Rmc%2BHeyhG3Mebq3k4; Path=/; Expires=Thu, 02 Dec 2022 01:58:34 GMT; HttpOnly',
             //'Content-Type':'application/x-www-form-urlencoded',   // 传参方式表单
             'Content-Type':'application/json;charset=UTF-8',        // 传参方式json
             'token':'80c483d59ca86ad0393cf8a98416e2a1'              // 这里自定义配置，这里传的是token

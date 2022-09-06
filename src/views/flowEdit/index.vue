@@ -78,7 +78,7 @@
 import { onMounted, Ref, ref, createVNode, computed, provide, watch } from "vue";
 import { Graph, Addon, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
-import { get } from 'lodash';
+import { get, filter, map } from 'lodash';
 import { ElMessage } from 'element-plus';
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
@@ -88,7 +88,7 @@ import transform from '@/components/transform.vue';
 import branch from "@/utils/choice/branch";
 import formRender from './components/formRender.vue'
 import nodeSetting from './components/nodeSetting.vue'
-import { ActiveNode, Processor } from '@/store/type';
+import { ActiveNode, Processor } from '@/store/modules/graph';
 
 const store = useStore();
 
@@ -103,6 +103,12 @@ let activeNode:Ref<ActiveNode | null> = ref();
 let canRedo = ref(true);
 let canUndo = ref(true);
 provide('activeNode', activeNode);
+
+function getUpstreamProcessorId(id) {
+  const edges = filter(graph.getEdges(), edge => edge.target.cell === id);
+  const upstreams = map(edges, edge => edge.source.cell);
+  return upstreams ? upstreams[0] : null;
+}
 
 function initEditor() {
   //注册组件节点
@@ -279,8 +285,15 @@ function initEditor() {
   // 点击画布中的节点
   graph.on('node:click', ({node}) => {
     if (!activeNode.value || activeNode.value.id !== node.id) {
-      const item = {id: node.id, name: get(node, 'data.name', ''), kind: get(node, 'data.kind'), parentId: node.getParentId()};
-      store.dispatch('graph/getProcessor', node.id);
+      const sourceId = getUpstreamProcessorId(node.id);
+      const item = {id: node.id, name: get(node, 'data.name', ''), kind: get(node, 'data.kind'), parentId: node.getParentId(), sourceId};
+      store.dispatch('graph/getProcessor', {
+        processorId: node.id,
+        name: item.name,
+        kind: item.kind,
+        parentProcessorId: item.parentId,
+        sourceProcessorId: sourceId
+      });
       activeNode.value = item;
       activeName.value = 'settings';
     }
@@ -373,11 +386,13 @@ function initEditor() {
   })
   graph.on('node:added', ({node, index, options}) => {
     const kind = get(node, 'data.kind');
+    const parentId = node.getParentId();
     // if ((kind === 'when' || kind === 'otherwise') && !store.getters.getProcessor(parentId)) return;
     const processor: Processor = {
+      parentProcessorId: parentId,
       processorId: node.id,
       name: get(node, 'data.name', ''),
-      kind: kind,
+      processorType: kind,
       properties: {},
       output: ''
     }
@@ -404,7 +419,7 @@ function initEditor() {
     //   item.grantId = item.parent?.getParentId();
     // }
     // console.log('add ', kind, item)
-    setShowRule();
+    save();
     store.dispatch('graph/addProcessor', processor);
   })
   graph.on('node:unselected', ({node}) => {
@@ -436,7 +451,7 @@ function initEditor() {
         });
       }
     }
-    setShowRule();
+    save();
     store.dispatch('graph/deleteProcessor', node.id);
     if (activeNode.value && activeNode.value.id === node.id) {
       activeNode.value = null;
@@ -458,6 +473,7 @@ function initEditor() {
   // 节点移动后
   graph.on('node:moved',() => save())
 
+  // 连线后更新下游节点的 processor.sourceProcessorId
   graph.on('edge:connected', ({ isNew, edge }) => {
     console.log('--- edge connected: ', isNew, edge.target.cell, edge.source.cell)
     if (isNew) {
@@ -465,10 +481,20 @@ function initEditor() {
       const target = edge.getTargetCell();
       const processorId = target?.id
       const parentId = target?.getParentId()
-      setShowRule();
+      save();
       // 保存画布节点输出信息
-      store.dispatch('graph/saveProcessor', {parentId, sourceId: source?.id, processorId})
+      store.dispatch('graph/saveProcessor', { parentProcessorId: parentId, sourceProcessorId: source?.id, processorId })
     }
+  })
+  // 连线删除
+  graph.on('edge:removed', ({ edge }) => {
+    const target = edge.getTargetCell();
+    console.log('--- edge removed: ', target)
+    if (target) {
+      const processorId = target?.id;
+      store.dispatch('graph/saveProcessor', { sourceProcessorId: '', processorId })
+    }
+    save();
   })
   canRedo.value = graph.history.canRedo();
   canUndo.value = graph.history.canUndo();
@@ -542,13 +568,11 @@ function deleteNode(node) {
   graph.removeCell(node.id);
 }
 
-function updateName(name) {
-  if (activeNode.value) {
-    const node = graph.getCellById(activeNode.value.id);
-    activeNode.value.name = name;
-    node.updateData({name});
-    store.dispatch('graph/updateProcessorName', {...activeNode.value})
-  }
+function updateName({ id, name, parentId, sourceId }) {
+  const node = graph.getCellById(id);
+  node.updateData({name});
+  store.dispatch('graph/updateProcessorName', {processorId: id, name, parentProcessorId: parentId, sourceProcessorId: sourceId});
+  save();
 }
 
 function onRedo() {
@@ -563,15 +587,13 @@ function setShowRule() {
 }
 
 function save() {
-  setShowRule()
-  store.dispatch('graph/save')
+  store.dispatch('graph/save', graph.toJSON())
 }
 
 // 清空画布
 function clearCells() {
   graph.clearCells();
-  store.commit('graph/setShowRule', graph.toJSON())
-  store.dispatch('clear')
+  save()
 }
 
 // 启动
@@ -587,22 +609,9 @@ watch(() => store.state.graph.showRule, () => {
   graph && graph.fromJSON(store.state.graph.showRule)
 })
 
-watch(() => store.state.context.loading, (newVal, val) => {
-  if (!newVal && val) store.dispatch('graph/fetchFlow', store.getters['context.nodeId']);
-})
-
-// watch(() => store.state.loading.delete, (val, oldVal) => {
-//   // 删除节点后保存一次画布数据
-//   if (oldVal && !val) {
-//     onSave();
-//   }
-// })
-
 onMounted(() => {
   initEditor();
-  store.dispatch('components/fetchList');
   store.dispatch('context/fetchContext');
-  store.dispatch('transform/fetchList');
   const data = store.state.graph.showRule;
   if (data) {
     graph.fromJSON(data);

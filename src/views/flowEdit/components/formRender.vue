@@ -6,7 +6,7 @@
       <el-button type="primary" plain round @click="onSave">保存</el-button>
     </div>
     <div class="hr"></div>
-    <div class="form-box">
+    <div class="form-box" v-loading="loading">
       <div class="form-item" v-for="field in formConfig.properties" :key="field.name">
         <div class="label">{{ field.title || node.label }}</div>
         <div class="opt">
@@ -87,8 +87,8 @@
 <script lang="ts" setup>
 import { watch, ref, defineProps, inject, computed } from "vue";
 import { useStore } from 'vuex';
-import { map, filter } from 'lodash';
-import { ActiveNode } from '@/store/type';
+import { map, filter, get } from 'lodash';
+import { ActiveNode } from '@/store/modules/graph';
 import { Graph } from '@antv/x6';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 import Inputs from '@/components/inputs.vue'
@@ -104,15 +104,15 @@ const props = defineProps<Props>();
 let metaInfo = store.getters['components/metaInfo'](props.node.kind);
 let execute = computed(() => store.state.graph.execute ? JSON.stringify(store.state.graph.execute, null, 4) : '');
 let executing = computed(() => store.state.graph.loading.execute);
+let loading = computed(() => store.state.graph.loading.get);
 let formConfig = ref(metaInfo);
-let properties = ref(store.getters['graph/properties'](props.node.id));
+let properties = ref({});
 //弹窗展示
 let dialogForm = ref({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
 // 处于焦点中的输入框
 let focusInputName = ref('')
-let sourceId = ref('')
 
 function updateProperties({name, value}) {
   const _properties = {
@@ -123,7 +123,9 @@ function updateProperties({name, value}) {
   console.log('--- input: ', _properties)
   store.dispatch('graph/setProperties', {
     properties: _properties,
-    node: {...props.node, sourceId: sourceId.value}
+    processorId: props.node.id,
+    parentProcessorId: props.node.parentId,
+    sourceProcessorId: props.node.sourceId
   })
 }
 function updateDialogForm({name, value}) {
@@ -156,10 +158,11 @@ function onSubmit() {
     ...dialogForm.value
   }
   properties.value = _properties;
-  const sourceId = getUpstreamProcessorId(props.node.id);
   store.dispatch('graph/setProperties', {
     properties: _properties,
-    node: {...props.node, sourceId}
+    processorId: props.node.id,
+    parentProcessorId: props.node.parentId,
+    sourceProcessorId: props.node.sourceId,
   });
   dialogFormVisible.value = false;
 }
@@ -199,16 +202,20 @@ function getUpstreamProcessorId(id) {
   return upstreams ? upstreams[0] : null;
 }
 function onSave() {
-  const { id, parentId } = props.node;
-  const sourceId = getUpstreamProcessorId(id);
+  const { id, parentId, sourceId } = props.node;
   // 保存画布节点输出信息
-  store.dispatch('graph/saveProcessor', {parentId, sourceId, processorId: id})
+  store.dispatch('graph/saveProcessor', { processorId: id, parentProcessorId: parentId, sourceProcessorId: sourceId })
 }
 
 watch(() => props.node, (newValue) => {
   formConfig.value = store.getters['components/metaInfo'](newValue.kind);
   properties.value = store.getters['graph/properties'](newValue.id);
-  sourceId.value = getUpstreamProcessorId(newValue.id);
+})
+
+watch(() => store.state.graph.loading.get, (newVal, val) => {
+  if (!newVal && val) {
+    properties.value = get(store.state.graph.processor[props.node.id], 'properties', {})
+  }
 })
 
 </script>

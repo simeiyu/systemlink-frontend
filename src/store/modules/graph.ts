@@ -1,18 +1,22 @@
 import { get, forEach, map, isEmpty } from 'lodash'
 import { ElMessage } from 'element-plus';
 import { FlowRoute, ProcessorInstance } from '@/api/api';
-export interface Route {
-  routeId: string;
-  properties: any;
-  transforms: Transformer[];
-  processors: Processor[];
-  externalDataSource: any[];
+
+export interface ActiveNode {
+  id: string;
+  kind: string;
+  name?: string;
+  parentId?: string;
+  sourceId?: string;
 }
 export interface Processor {
   processorId: string;
+  parentProcessorId?: string;
+  sourceProcessorId?: string;
   name?: string;
-  kind: string;
+  processorType: string;
   properties: object;
+  nodeId?: string;
   processors?: Processor[];
   output: string;
 }
@@ -20,9 +24,7 @@ export interface Processor {
 export default {
   namespaced: true,
   state: () => ({
-    // showRule: {},
-    // routeJson: [],
-    // processors: [],      // 输出逻辑中的processors
+    showRule: null,
     processor: {},       // 输出逻辑中的processors 一一映射
     status: '',
     execute: '',
@@ -30,7 +32,7 @@ export default {
   }),
   getters: {
     processor: (state) => (processorId) => state.processor[processorId],
-    properties: (state) => (processorId) => state.processor[processorId].properties || {},
+    properties: (state) => (processorId) => get(state.processor[processorId], 'properties', {}),
     showRule: (state) => () => state.showRule,
   },
   mutations: {
@@ -38,7 +40,7 @@ export default {
       state.showRule = showRule
     },
     setProcessors(state, processors) {
-      state.processors = processors;
+      console.log('--- processors: ', processors)
       if (!isEmpty(processors)) {
         const mapper = {};
         const loopProper = function(data, parentProcessorId) {
@@ -53,6 +55,7 @@ export default {
           })
         }
         loopProper(processors, undefined);
+        console.log('--- processor: ', mapper)
         state.processor = mapper;
       }
     },
@@ -72,23 +75,26 @@ export default {
     deleteProcessor(state, processorId) {
       delete state.processor[processorId];
     },
-    updateProcessorName(state, node) {
-      state.processor[node.id].name = node.name;
+    updateProcessorName(state, {processorId, name}) {
+      state.processor[processorId].name = name;
     },
-    setProperties(state, {properties, node}) {
-      state.processor[node.id].properties = properties;
+    setProperties(state, {properties, processorId}) {
+      state.processor[processorId].properties = properties;
     },
   },
   actions: {
     // 请求画布数据（flowOut， graphJson）
-    fetchFlow({commit}, payload) {
+    fetchFlow({commit, dispatch}, payload) {
       FlowRoute.get(payload).then((res: any) => {
         if (res.code === 200) {
           const {routeJson, showRule} = res.data;
-          commit('setShowRule', JSON.parse(showRule));
-          const flowOut = JSON.parse(routeJson);
-          commit('setProcessors', flowOut.processors);
-          commit('transform/setTransforms', flowOut.transforms);
+          showRule && commit('setShowRule', JSON.parse(showRule));
+          if (routeJson) {
+            const flowOut = JSON.parse(routeJson);
+            console.log('--- flowOut: ', flowOut)
+            commit('setProcessors', flowOut.processors);
+            dispatch('transform/setTransforms', flowOut.transforms, { root: true });
+          }
         }
       })
     },
@@ -100,8 +106,7 @@ export default {
     // 更新节点的name
     updateProcessorName({commit, dispatch}, node) {
       commit('updateProcessorName', node)
-      // 保存画布
-      dispatch('save')
+      dispatch('saveProcessor', node)
     },
     // 删除节点
     deleteProcessor({commit, dispatch}, processorId) {
@@ -110,74 +115,59 @@ export default {
         commit('deleteProcessor', processorId);
         ElMessage.success('节点信息已删除');
         commit('setLoading', {key: 'delete', loading: false})
-        // 保存画布
-        dispatch('save')
       })
     },
-    getProcessor({commit, dispatch}, processorId) {
+    getProcessor({commit, dispatch}, {processorId, ...rest}) {
+      commit('setLoading', {key: 'get', loading: true})
       ProcessorInstance.get(processorId).then((res: any) => {
-        if (res.code === 200) {
+        console.log('--- getProcessor: ', res)
+        if (res.code === 200 && res.data) {
           const { properties } = res.data
           commit('setProcessor', {
             ...res.data,
             properties: JSON.parse(properties)
           });
+        } else {
+          commit('setProcessor', {
+            processorId: processorId,
+            ...rest,
+            properties: {}
+          });
         }
+        commit('setLoading', {key: 'get', loading: false})
       })
     },
     // 保存画布节点
-    saveProcessor({commit, dispatch, getters, rootGetters}, {parentId, sourceId, processorId}) {
+    saveProcessor({commit, dispatch, getters, rootGetters}, payload) {
       const nodeId = rootGetters['context/nodeId']();
+      const processorId = payload.processorId;
       const processor = getters['processor'](processorId);
       const param = {
-        nodeId,
-        parentProcessorId: parentId,
-        sourceProcessorId: sourceId,
-        processorId,
-        processorType: processor.kind,
+        ...processor,
+        ...payload,
+        nodeId: nodeId,
         properties: JSON.stringify(processor.properties),
-        output: ''
       }
       ProcessorInstance.save(param).then((res: any) => {
         if (res.code === 200) {
           ElMessage.success('保存节点信息成功')
-          // 保存画布
-          dispatch('save')
         }
       })
     },
     // 更新节点的properties
     setProperties({commit, dispatch}, payload) {
       commit('setProperties', payload)
-      const { id, parentId, sourceId } = payload.node
-      dispatch('saveProcessor', {parentId, sourceId, processorId: id})
+      dispatch('saveProcessor', payload)
     },
-    clear({commit, dispatch}, payload) {
-      dispatch('save', {
-        routeId: "",
-        properties: {},
-        transforms: [],
-        processors: [],
-        externalDataSource: []
+    save({commit, rootGetters}, payload) {
+      commit('setShowRule', payload)
+      const nodeId = rootGetters['context/nodeId']();
+      FlowRoute.save({
+        nodeId: nodeId,
+        showRule: JSON.stringify(payload),
+      }).then((res: any) => {
+        console.log('--- save: ', res)
       })
-    },
-    save({commit, getters, rootGetters}, payload) {
-      const showRule = getters['showRule']();
-      console.log('--- showRule: ', showRule)
-      let routeJson;
-      if (payload) {
-        routeJson = payload
-      } else {
-        const processors = [];
-
-        routeJson = {
-          routeId: "",
-          properties: {},
-          transforms: rootGetters['transform/get'],
-          processors: processors,
-          externalDataSource: []
-        }
-      }
     },
     // 启动集成流
     turnOn({commit, state, rootGetters}) {

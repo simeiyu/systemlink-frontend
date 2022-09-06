@@ -1,21 +1,16 @@
 <template>
   <div>
     <div class="line-r">
-      <el-button type="primary" size="small" plain icon="Plus" @click="addLine()">新增</el-button>
+      <el-button type="primary" size="small" plain icon="Plus" :disabled="disabled" @click="addLine()">新增</el-button>
     </div>
     <el-table
-      cell-class-name="sys-table-cell"
       :data="tableData"
-      max-height="360"
+      cell-class-name="sys-table-cell"
       empty-text="暂无数据"
       default-expand-all
       row-key="rowKey"
-      lazy
-      :load="load"
      >
-      <el-table-column
-          v-for="row in tableConfig"
-          :prop="row.name" :label="row.title">
+      <el-table-column v-for="row in tableConfig" :prop="row.name" :label="row.title">
         <template #default="scope">
           <field-factory
             :node-data="row"
@@ -28,7 +23,7 @@
       <el-table-column label="操作" :width="width">
         <template #default="scope">
           <el-button type="danger" size="small" plain @click="deleteRow(scope.row)">删除</el-button>
-          <el-button v-if="treeTable && scope.row.children" class="sys-table-add" type="text" circle icon="CirclePlusFilled" @click="addChildren(scope.row)"></el-button>
+          <el-button v-if="treeTable" class="sys-table-add" type="text" circle icon="CirclePlusFilled" @click="addChildren(scope.row)"></el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -36,8 +31,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineEmits, reactive, watch } from "vue";
-import { forEach, findIndex, remove } from "lodash";
+import { computed, defineEmits, reactive, ref, watch } from "vue";
+import { forEach, findIndex, remove, isEmpty } from "lodash";
 import { v4 as uuidv4 } from 'uuid';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 import func from "vue-temp/vue-editor-bridge";
@@ -59,8 +54,17 @@ const props = defineProps({
   properties: Object,
   treeTable: Boolean
 });
+
+interface Row {
+  rowKey: string;
+  hasChildren?: boolean;
+  children?: Row[];
+  [propName:string]: any;
+}
+
 let width:number = computed(() => props.treeTable ? 110 : 60);
-let tableData = reactive(props.modelValue);
+let tableData: Row[] = props.modelValue;
+let disabled:boolean = computed(() => props.treeTable && tableData.length > 0)
 let defaultRow = getDefaultRow(props.tableConfig);
 function getDefaultRow(columns) {
   const row = {};
@@ -74,22 +78,23 @@ function addLine() {
     ...defaultRow,
     rowKey: uuidv4(),
   };
-  if (props.treeTable) {
-    row.children = [];
-    row.hasChildren = true;
-  }
   tableData.push(row);
   onChange();
 }
-function deleteRow({rowKey, parentRowKey}) {
-  if (parentRowKey) {
-    const parentIndex = tableData.findIndex(item => item.rowKey === parentRowKey);
-    if (parentIndex > -1) {
-      remove(tableData[parentIndex].children, item => item.rowKey === rowKey)
-    }
+function loopDel (rowKey, data) {
+  const index = data.findIndex(item => item.rowKey === rowKey);
+  if (index > -1) {
+    data.splice(index, 1)
   } else {
-    remove(tableData, item => item.rowKey === rowKey)
+    data.forEach(item => {
+      if (!isEmpty(item.children)) {
+        loopDel(rowKey, item.children)
+      }
+    })
   }
+}
+function deleteRow({rowKey}) {
+  loopDel(rowKey, tableData)
   onChange();
 }
 function addChildren(row) {
@@ -110,16 +115,8 @@ function onChange() {
   emit('change', tableData);
 }
 
-function load(row, treeNode, resolve) {
-  resolve(row.children)
-}
-
 watch(() => props.tableConfig, (newValue) => {
   defaultRow = getDefaultRow(newValue);
-})
-
-watch(() => props.modelValue, (newValue) => {
-  tableData = newValue;
 })
 
 </script>

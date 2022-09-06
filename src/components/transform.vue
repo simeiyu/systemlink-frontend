@@ -70,15 +70,7 @@ let metaInfo = ref<MetaInfo | null>()
 let focusInputName = ref('')
 let saving = computed(() => store.state.transform.saving);
 
-watch(() => store.state.transform.modal.visible, (value) => {
-console.log('--- transform visible: ', value)
-})
-watch(() => store.state.transform.saving, (newVal, val) => {
- if (!newVal && val) {
-  // 保存成功
-  store.dispatch('graph/save')
- }
-})
+
 watch(() => store.state.transform.modal.transform, (value) => {
   if (value) {
     transform.value = value;

@@ -28,6 +28,9 @@ export default {
       state.loading = true;
       Suanpan.getContext().then((res: any) => {
         commit('setContext', res.data);
+        dispatch('graph/fetchFlow', res.data.nodeId, { root: true })
+        dispatch('components/fetchList', null, { root: true })
+        dispatch('transform/fetchList', null, { root: true })
       }).finally(() => {
         state.loading = false;
         // commit('setContext', {

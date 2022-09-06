@@ -6,6 +6,55 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "31651812",
+      "name": "分散聚集",
+      "font_class": "fensanjuji",
+      "unicode": "e767",
+      "unicode_decimal": 59239
+    },
+    {
+      "icon_id": "31651813",
+      "name": "移除变量",
+      "font_class": "yichubianliang",
+      "unicode": "e768",
+      "unicode_decimal": 59240
+    },
+    {
+      "icon_id": "31651814",
+      "name": "设置变量",
+      "font_class": "shezhibianliang",
+      "unicode": "e769",
+      "unicode_decimal": 59241
+    },
+    {
+      "icon_id": "31651815",
+      "name": "Webhook",
+      "font_class": "Webhook",
+      "unicode": "e76a",
+      "unicode_decimal": 59242
+    },
+    {
+      "icon_id": "31651816",
+      "name": "数据库",
+      "font_class": "shujuku",
+      "unicode": "e76b",
+      "unicode_decimal": 59243
+    },
+    {
+      "icon_id": "31651817",
+      "name": "Http Request",
+      "font_class": "a-HttpRequest",
+      "unicode": "e76c",
+      "unicode_decimal": 59244
+    },
+    {
+      "icon_id": "31651818",
+      "name": "日志记录",
+      "font_class": "rizhijilu",
+      "unicode": "e76d",
+      "unicode_decimal": 59245
+    },
+    {
       "icon_id": "7834345",
       "name": "plus",
       "font_class": "plus",

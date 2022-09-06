@@ -3,10 +3,10 @@ import { Transform } from '../api/api';
 import { createStore } from 'vuex';
 import { NodeGroup, FlowRoute, Suanpan, ProcessorInstance } from '@/api/api';
 import { map, find, get, forEach, remove, filter, isEmpty, findIndex } from 'lodash';
-import { State } from './type';
+// import { State } from './type';
 import { v4 as uuidv4 } from 'uuid';
 
-export const store = createStore<State>({
+export const store = createStore({
   state() {
     return {
       flowOut: {

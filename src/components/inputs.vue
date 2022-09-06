@@ -126,7 +126,7 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
           store.commit('transform/update', {
             processorId,
             transformId,
-            properties: JSON.parse(properties),
+            properties,
             output: JSON.parse(output),
           });
           return {
