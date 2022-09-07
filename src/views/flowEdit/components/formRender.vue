@@ -40,12 +40,12 @@
 
   <el-dialog title="设 置" v-model="dialogFormVisible" destroy-on-close width="60%" custom-class="sys-dialog" @closed="onDialogClosed">
     <div class="dia-content">
-      <Inputs @selectExpression="onSelectExpression" />
+      <Inputs />
       <el-scrollbar height="500px" class="dia-form">
-        <div class="sys-padding-hori" v-for="field in dialogFormConfig">
+        <div class="sys-padding-hori" v-for="field in dialogFormConfig" @mousedown.prevent>
           <div :class="{'sys-form-group': field.form!=='table', 'sys-form-group-line': field.form==='input' || field.form==='select', 'sys-form-table': field.form==='table'}">
             <div class="sys-label">{{ field.title }}</div>
-            <field-factory :node-data="field" v-model="dialogForm[field.name]" :properties="dialogForm" @input="updateDialogForm" :focus="onFocus"></field-factory>
+            <field-factory :node-data="field" v-model="dialogForm[field.name]" :properties="dialogForm" @input="updateDialogForm"></field-factory>
           </div>
           <div class="sys-form-sub" v-if="dialogForm[field.name]&&field.extend">
             <div v-for="subField in field.extend[dialogForm[field.name]].content"
@@ -57,7 +57,6 @@
                 :node-data="subField"
                 v-model="dialogForm[subField.name]"
                 :properties="dialogForm"
-                :focus="onFocus"
                 @input="updateDialogForm"
               >
               </field-factory>
@@ -112,7 +111,7 @@ let dialogForm = ref({});
 let dialogFormVisible = ref(false);
 let dialogFormConfig = ref({});
 // 处于焦点中的输入框
-let focusInputName = ref('')
+let focusInputName = computed(() => store.state.context.focusInputName);
 
 function updateProperties({name, value}) {
   const _properties = {
@@ -185,13 +184,10 @@ function handleExecute() {
   });
 }
 
-function onFocus(name) {
-  focusInputName.value = name;
-}
-
 function onSelectExpression(exp: string) {
-  if (focusInputName.value) {
-    dialogForm.value[focusInputName.value] = exp;
+  console.log('--- onSelectExpression: ', exp)
+  if (focusInputName) {
+    dialogForm.value[focusInputName] = exp;
   }
 }
 

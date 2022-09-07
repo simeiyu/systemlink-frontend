@@ -7,7 +7,9 @@ export default {
     nodeId: '',
     userId: '',
     componentId: '',
-    loading: false
+    loading: false,
+    focusInputName: '',
+    expression: '',
   }),
   getters: {
     nodeId: (state) => () => state.nodeId,
@@ -21,6 +23,9 @@ export default {
       state.userId = userId;
       state.componentId = componentId;
     },
+    setFocusInput(state, payload) {
+      state.focusInputName = payload
+    }
   },
   actions: {
     // 请求环境变量（appId, userId, nodeId, componentId)
@@ -44,5 +49,8 @@ export default {
         // dispatch('graph/fetchFlow', "99ec0780f39211ec84c5bfc02d1bcaa4", {root: true});
       })
     },
+    setExpression({commit, state}, payload) {
+      state.expression = payload
+    }
   },
 }

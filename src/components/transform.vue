@@ -16,7 +16,7 @@
       </el-form-item>
     </el-space>
     <div class="sys-transform-wrapper">
-      <Inputs @selectExpression="onSelectExpression" />
+      <Inputs />
       <el-scrollbar height="500px" class="sys-transform-metaInfo">
         <div class="sys-form" v-if="metaInfo">
           <div
@@ -29,7 +29,7 @@
             }"
           >
             <div class="sys-label">{{ prop.title }}</div>
-            <field-factory :node-data="prop" v-model="transform.properties[prop.name]" @input="updateProperties" :focus="onFocus" />
+            <field-factory :node-data="prop" v-model="transform.properties[prop.name]" @input="updateProperties" />
           </div>
         </div>
       </el-scrollbar>

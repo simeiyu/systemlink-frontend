@@ -35,7 +35,6 @@ import { computed, defineEmits, reactive, ref, watch } from "vue";
 import { forEach, findIndex, remove, isEmpty } from "lodash";
 import { v4 as uuidv4 } from 'uuid';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
-import func from "vue-temp/vue-editor-bridge";
 
 const emit = defineEmits(['change']);
 const props = defineProps({
@@ -51,6 +50,7 @@ const props = defineProps({
     required: false,
     default: () => ([])
   },
+  focus: Function,
   properties: Object,
   treeTable: Boolean
 });

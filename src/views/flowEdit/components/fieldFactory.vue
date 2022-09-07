@@ -2,12 +2,14 @@
   <el-skeleton v-if="nodeData.form==='el-checkbox-group' && loading" :rows="3" animated />
   <component
     :is="type"
+    ref="refField"
     show-time
     :multiple="nodeData.multiple"
     :required="nodeData.required"
     :tableConfig="nodeData.table"
     @change="change"
     @focus="onFocus"
+    @blur="onBlur"
     v-model="fieldValue"
     :value-format="dateFormat"
     :placeholder="nodeData.title"
@@ -18,6 +20,7 @@
     :rows="2"
     :properties="properties"
     :treeTable="nodeData.form === 'treeTable'"
+    @mousedown.stop
   >
     <el-option
         v-if="type==='el-select'"
@@ -40,7 +43,7 @@
 <script lang="ts" setup>
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
-import { ref, defineEmits, watch, computed, markRaw, onMounted } from "vue";
+import { ref, defineEmits, watch, markRaw, onMounted } from "vue";
 import { forEach, isEmpty, has, map } from 'lodash';
 import { useStore } from 'vuex';
 import { ElMessage } from 'element-plus';
@@ -61,7 +64,6 @@ const props = defineProps({
     required: true,
     default: () => ''
   },
-  focus: Function,
   properties: Object
 });
 const fieldMap = {
@@ -78,10 +80,12 @@ const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
 let options = ref([]);
 let type = ref('');
+let refField = ref();
 let fieldValue = ref();
 // valueUrl 中解析的query
 let remoteUrl = ref('');
 let loading = ref(false);
+let isFocus = ref(false);
 // 装载选项数据
 function loadOptionData() {
   options.value = props.nodeData.enum;
@@ -121,11 +125,13 @@ function checkData() {
 }
 
 function change(val) {
-  console.log('--- field change: ', props.nodeData.name, val)
   emit('input', {name: props.nodeData.name, value: val})
 }
 function onFocus() {
-  if (props.focus) props.focus(props.nodeData.form === 'input' ? props.nodeData.name : '');
+  isFocus.value = true
+}
+function onBlur() {
+  isFocus.value = false
 }
 
 function getRemoteUrl(properties) {
@@ -172,15 +178,23 @@ function getRemoteOptions(url) {
 }
 
 watch(() => props.nodeData, (newValue, oldValue) => {
-  console.log('--- watch nodeData')
   checkData();
 })
 watch(() => props.modelValue, (newValue, oldValue) => {
   fieldValue.value = newValue
 })
+watch(() => store.state.context.expression, (newValue, oldValue) => {
+  if (isFocus.value && ['input', 'textArea'].includes(props.nodeData.form)) {
+    const start = refField.value.ref.selectionStart;
+    const end = refField.value.ref.selectionEnd;
+    const prev = fieldValue.value.slice(0, start);
+    const next = fieldValue.value.slice(end);
+    fieldValue.value = prev + newValue + next;
+    emit('input', {name: props.nodeData.name, value: fieldValue.value})
+  }
+})
 watch(() => props.properties, (newValue, oldValue) => {
   if (props.nodeData.valueUrl && !remoteUrl.value) {
-    console.log('--- properties changed: ', newValue)
     getRemoteUrl(newValue)
   }
 })

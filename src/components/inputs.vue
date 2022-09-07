@@ -1,5 +1,5 @@
 <template>
-  <div class="sys-inputs-wrapper">
+  <div class="sys-inputs-wrapper" @mousedown.prevent>
     <h4 class="sys-inputs-title">输入数据</h4>
     <el-scrollbar height="460px" class="sys-inputs">
       <el-tree
@@ -9,14 +9,22 @@
         :data="data"
         :props="TreeProps"
         :load="loadNode"
-        @node-click="handleNodeClick"
-        @node-expand="handleExpand"
         lazy
       >
         <template #default="{ node, data }">
-          <span :class="{'sys-tree-node': !!data.action}">
-            <span>{{ node.label }}</span>
-            <span v-if="data.type" class="sys-tree-node-type">{{ data.type }}</span>
+          <span :class="{'sys-tree-node': !!data.action || data.type==='JSONArray'}">
+            <span>{{ node.label }}
+              <a v-if="data.type" class="sys-tree-node-type" @click.stop="handleNodeClick(data, node)">{{ data.type }}</a>
+            </span>
+            <el-input-number
+              v-if="data.type==='JSONArray'"
+              v-model="data.index"
+              size="small"
+              controls-position="right"
+              class="sys-tree-node-number"
+              @mousedown.stop
+              @change="(val) => onIndexChange(val, node)"
+            />
             <el-button v-if="data.action" class="sys-tree-node-action" type="primary" @click.stop="data.action.click(node, data)" :icon="data.action.icon" circle text></el-button>
           </span>
         </template>
@@ -28,14 +36,13 @@
 <script lang="ts" setup>
 import { ref, watch, inject, reactive, defineEmits, computed } from 'vue'
 import { useStore } from 'vuex'
-import { isEmpty, map, get } from 'lodash'
+import { isEmpty, map, get, toLower } from 'lodash'
 import { ElTree } from 'element-plus'
 import type Node from 'element-plus/es/components/tree/src/model/node'
 import { ProcessorInstance, Transform } from '@/api/api'
 
 const store = useStore();
 const activeNode = inject('activeNode');
-const emits = defineEmits(['selectExpression'])
 
 interface Tree {
   id: string;
@@ -45,6 +52,7 @@ interface Tree {
   leaf?: boolean;
   expression?: string;
   type?: string;
+  index?: number;
 }
 let data = reactive<Tree[]>([]);
 let loading = ref(false);
@@ -79,7 +87,10 @@ function loopUpstream(data) {
       label: title,
       type: type,
       expression: expression,
-      hasChildren: false
+      // hasChildren: false
+    }
+    if (toLower(type) === 'jsonarray') {
+      item.index = 0
     }
     if (!isEmpty(properties)) {
       item.children = loopUpstream(properties);
@@ -159,13 +170,17 @@ function openTransform (node, data) {
   const transformId = data.id !== '222' ? data.id : null;
   store.commit('transform/openModal', {visible: true, transformId, processorId: activeNode.value.id})
 }
-function handleNodeClick (node: Tree) {
-  if (node.expression) {
-    emits('selectExpression', node.expression)
+function handleNodeClick (data: Tree, node) {
+  let exp = get(data, 'expression', '');
+  if (node.parent && get(node.parent, 'data.type') === 'JSONArray') {
+    const index = get(node.parent, 'data.index');
+    exp = exp.replace('*', index);
+    console.log('--- exp: ', index, exp)
   }
+  store.dispatch('context/setExpression', exp)
 }
-function handleExpand (data: Tree) {
-  // console.log('--- expand: ', data)
+function onIndexChange (val, data: Tree) {
+  console.log('--- onIndexChange: ', val, data)
 }
 
 const TreeProps = {
@@ -207,6 +222,13 @@ const TreeProps = {
       border: 1px solid var(--el-border-color-lighter);
       font-size: 12px;
       color: var(--el-color-info);
+    }
+    &-number {
+      width: 64px;
+      &.el-input-number.is-controls-right .el-input__wrapper {
+        padding-left: 8px!important;
+        padding-right: 32px!important;
+      }
     }
   }
 </style>
