@@ -120,7 +120,6 @@ export default {
     getProcessor({commit, dispatch}, {processorId, ...rest}) {
       commit('setLoading', {key: 'get', loading: true})
       ProcessorInstance.get(processorId).then((res: any) => {
-        console.log('--- getProcessor: ', res)
         if (res.code === 200 && res.data) {
           const { properties } = res.data
           commit('setProcessor', {

@@ -44,7 +44,7 @@
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
 import { ref, defineEmits, watch, markRaw, onMounted } from "vue";
-import { forEach, isEmpty, has, map } from 'lodash';
+import { forEach, isEmpty, has, map, get } from 'lodash';
 import { useStore } from 'vuex';
 import { ElMessage } from 'element-plus';
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
@@ -76,6 +76,7 @@ const fieldMap = {
   "textArea":'el-input',
   "el-checkbox-group": 'el-checkbox-group',
 }
+
 const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
 let options = ref([]);
@@ -83,7 +84,8 @@ let type = ref('');
 let refField = ref();
 let fieldValue = ref();
 // valueUrl 中解析的query
-let remoteUrl = ref('');
+let valueUrl = ref({});
+// let remoteUrl = ref('');
 let loading = ref(false);
 let isFocus = ref(false);
 // 装载选项数据
@@ -91,7 +93,9 @@ function loadOptionData() {
   options.value = props.nodeData.enum;
   // remote - valueUrl
   if (props.nodeData.valueUrl) {
-    getRemoteUrl(props.properties);
+    // getRemoteUrl(props.properties);
+    formatValueUrl(props.nodeData.valueUrl);
+    getRemoteOptions(props.properties);
   }
 }
 
@@ -111,8 +115,8 @@ function loadTableData() {
 //检查需要的类型
 function checkData() {
   type.value = fieldMap[props.nodeData.form];
-  fieldValue.value = props.modelValue || (props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form) ? [] : '');
-  remoteUrl.value = ''
+  fieldValue.value = props.modelValue || ((props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form)) ? [] : '');
+  // remoteUrl.value = ''
   switch (props.nodeData.form) {
     case 'select':
     case 'el-checkbox-group':
@@ -134,40 +138,54 @@ function onBlur() {
   isFocus.value = false
 }
 
-function getRemoteUrl(properties) {
-  const str = props.nodeData.valueUrl;
-  if (str.indexOf('(?)') === -1) return str;
-  const appId = store.getters['context/appId']();
-  const arr = map(str.split('&'), (item, index) => {
-    let i = 0;
-    if (!index && item.indexOf('(?)') > -1) {
-      i = item.replace('(?)', '').lastIndexOf('?') + 1;
-    } 
-    const query = item.slice(i).split('=');
-    const key = query[0];
-    if (key === 'appId') {
-      return item.replace(`${key}=(?)`, `${key}=${appId}`)
-    } else if (has(properties, key)) {
-      return item.replace(`${key}=(?)`, `${key}=${properties[key]}`)
-    } else if (query[1] === '(?)') {
-      console.log(`【${props.nodeData.title}】远程请求地址${str}中的${key}未能解析到`);
-    }
-    return item;
-  });
-  const url = arr.join('&');
-  console.log('--- remote url: ', url)
-  if (url.indexOf('(?)') === -1 && remoteUrl.value !== url) {
-    remoteUrl.value = url;
-    getRemoteOptions(url);
+function formatValueUrl(str) {
+  const index = str.indexOf('?');
+  const path = str.slice(0, index);
+  const params = str.slice(index + 1).split('&');
+  const query = {}
+  forEach(params, item => {
+    const arr = item.split('=');
+    query[arr[0]] = arr[1];
+  })
+  valueUrl.value = {
+    path,
+    query
   }
 }
 
-function getRemoteOptions(url) {
+function getValueUrl(params) {
+  let url = valueUrl.value.path;
+  const query = valueUrl.value.query;
+  if (!isEmpty(query)) {
+    url += '?'
+    const arr: string[] = []
+    for (let key in query) {
+      let val
+      if (key === 'appId') {
+        val = store.getters['context/appId']();
+      } else {
+        if (query[key] === '(?)' && key in params) {
+          val = params[key]
+        } else {
+          val = query[key]
+        }
+      }
+      arr.push(`${key}=${val}`)
+    }
+    url += arr.join('&')
+  }
+  return url
+}
+
+function getRemoteOptions(params) {
   loading.value = true;
+  const url = getValueUrl(params || props.properties);
+  if (url.indexOf('(?)') > -1) return;
   NodeGroup.getOptions(url).then((res: any) => {
     loading.value = false;
     if (res.code === 200) {
       options.value = res.data;
+      fieldValue.value = (props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form)) ? [] : '';
     } else {
       ElMessage({
         type: 'error',
@@ -194,8 +212,10 @@ watch(() => store.state.context.expression, (newValue, oldValue) => {
   }
 })
 watch(() => props.properties, (newValue, oldValue) => {
-  if (props.nodeData.valueUrl && !remoteUrl.value) {
-    getRemoteUrl(newValue)
+  if (props.nodeData.valueUrl && !isEmpty(valueUrl.value.query)
+    && Object.keys(valueUrl.value.query).findIndex(key => newValue[key] !== oldValue[key]) > -1
+    ) {
+    getRemoteOptions(newValue)
   }
 })
 

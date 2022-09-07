@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, inject, reactive, defineEmits, computed } from 'vue'
+import { ref, inject, reactive } from 'vue'
 import { useStore } from 'vuex'
 import { isEmpty, map, get, toLower } from 'lodash'
 import { ElTree } from 'element-plus'
