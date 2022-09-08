@@ -79,6 +79,7 @@ export default {
       state.processor[processorId].name = name;
     },
     setProperties(state, {properties, processorId}) {
+      if (!state.processor[processorId]) state.processor[processorId] = {}
       state.processor[processorId].properties = properties;
     },
   },
@@ -91,7 +92,6 @@ export default {
           showRule && commit('setShowRule', JSON.parse(showRule));
           if (routeJson) {
             const flowOut = JSON.parse(routeJson);
-            console.log('--- flowOut: ', flowOut)
             commit('setProcessors', flowOut.processors);
             dispatch('transform/setTransforms', flowOut.transforms, { root: true });
           }

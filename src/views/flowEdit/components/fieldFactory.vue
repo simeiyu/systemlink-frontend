@@ -43,12 +43,14 @@
 <script lang="ts" setup>
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
-import { ref, defineEmits, watch, markRaw, onMounted } from "vue";
-import { forEach, isEmpty, has, map, get } from 'lodash';
+import { ref, defineEmits, watch, markRaw, onMounted, inject, computed } from "vue";
+import { forEach, isEmpty, findIndex, map, get } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import { useStore } from 'vuex';
 import { ElMessage } from 'element-plus';
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
 import { NodeGroup } from '@/api/api';
+import { ActiveNode } from '@/store/modules/graph';
 
 const emit = defineEmits(['input'])
 const store = useStore();
@@ -64,6 +66,10 @@ const props = defineProps({
     required: true,
     default: () => ''
   },
+  nodeKind: {
+    type: String,
+    default: () => ''
+  },
   properties: Object
 });
 const fieldMap = {
@@ -76,6 +82,7 @@ const fieldMap = {
   "textArea":'el-input',
   "el-checkbox-group": 'el-checkbox-group',
 }
+const activeNode: ActiveNode = inject('activeNode');
 
 const dateFormat = "YYYY-MM-DD HH:mm:ss";
 //定义select的选项
@@ -85,18 +92,12 @@ let refField = ref();
 let fieldValue = ref();
 // valueUrl 中解析的query
 let valueUrl = ref({});
-// let remoteUrl = ref('');
-let loading = ref(false);
+let url = ref('');
+let loading = computed(() => store.state.options.loading);
 let isFocus = ref(false);
 // 装载选项数据
 function loadOptionData() {
   options.value = props.nodeData.enum;
-  // remote - valueUrl
-  if (props.nodeData.valueUrl) {
-    // getRemoteUrl(props.properties);
-    formatValueUrl(props.nodeData.valueUrl);
-    getRemoteOptions(props.properties);
-  }
 }
 
 // 装载表格基础数据
@@ -116,7 +117,11 @@ function loadTableData() {
 function checkData() {
   type.value = fieldMap[props.nodeData.form];
   fieldValue.value = props.modelValue || ((props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form)) ? [] : '');
-  // remoteUrl.value = ''
+  // remote - valueUrl
+  if (props.nodeData.valueUrl) {
+    formatValueUrl(props.nodeData.valueUrl);
+    getRemoteOptions(props.properties);
+  }
   switch (props.nodeData.form) {
     case 'select':
     case 'el-checkbox-group':
@@ -177,29 +182,55 @@ function getValueUrl(params) {
   return url
 }
 
-function getRemoteOptions(params) {
-  loading.value = true;
-  const url = getValueUrl(params || props.properties);
-  if (url.indexOf('(?)') > -1) return;
-  NodeGroup.getOptions(url).then((res: any) => {
-    loading.value = false;
-    if (res.code === 200) {
-      options.value = res.data;
-      fieldValue.value = (props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form)) ? [] : '';
-    } else {
-      ElMessage({
-        type: 'error',
-        message: res.msg
-      })
+function initDatabaseSetlistValue() {
+  // 数据库组件（database) -> 新增 -> 详细设置 -> 表选择后，设置值默认根据表数据初始化或重置
+  if (!isEmpty(options.value) && props.nodeData.table) {
+    let reset = isEmpty(fieldValue.value);
+    const row = {};
+    let fieldName;
+    forEach(props.nodeData.table, item => {
+      if (item.valueUrl === props.nodeData.valueUrl) fieldName = item.name
+      row[item.name] = ''
+    });
+    const valueArr = map(options.value, item => item.value);
+    if (!reset) {
+      const index = findIndex(fieldValue.value, item => !valueArr.includes(item[fieldName]))
+      reset = index > -1;
     }
-  })
+    if (reset) {
+      const rows = map(options.value, ({value}) => ({ ...row, [`${fieldName}`]: value, rowKey: uuidv4()}));
+      fieldValue.value = rows;
+      emit('input', {name: props.nodeData.name, value: rows})
+    }
+  }
+}
+
+function getRemoteOptions(params) {
+  const _url = getValueUrl(params || props.properties);
+  if (_url.indexOf('(?)') > -1) return;
+  url.value = _url;
+  const opt = store.state.options.data[_url];
+  if (!opt) {
+    store.dispatch('options/fetch', _url);
+  } else {
+    options.value = opt;
+    if (props.nodeKind === 'database' && props.nodeData.name === 'setList') {
+      initDatabaseSetlistValue()
+    }
+  }
 }
 
 watch(() => props.nodeData, (newValue, oldValue) => {
   checkData();
 })
 watch(() => props.modelValue, (newValue, oldValue) => {
-  fieldValue.value = newValue
+  fieldValue.value = newValue;
+})
+watch(() => store.state.options.data[url.value], (newValue, oldValue) => {
+  options.value = newValue;
+  if (props.nodeKind === 'database' && props.nodeData.name === 'setList') {
+    initDatabaseSetlistValue()
+  }
 })
 watch(() => store.state.context.expression, (newValue, oldValue) => {
   if (isFocus.value && ['input', 'textArea'].includes(props.nodeData.form)) {
@@ -215,6 +246,9 @@ watch(() => props.properties, (newValue, oldValue) => {
   if (props.nodeData.valueUrl && !isEmpty(valueUrl.value.query)
     && Object.keys(valueUrl.value.query).findIndex(key => newValue[key] !== oldValue[key]) > -1
     ) {
+    if (props.nodeData.form === 'el-checkbox-group') {
+      fieldValue.value = (props.nodeData.multiple || ['treeTable', 'table'].includes(props.nodeData.form)) ? [] : '';
+    }
     getRemoteOptions(newValue)
   }
 })

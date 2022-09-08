@@ -63,8 +63,8 @@ interface Row {
 }
 
 let width:number = computed(() => props.treeTable ? 110 : 60);
-let tableData: Row[] = props.modelValue;
-let disabled:boolean = computed(() => props.treeTable && tableData.length > 0)
+let tableData: Row[] = ref(props.modelValue || []);
+let disabled:boolean = computed(() => props.treeTable && tableData.value.length > 0)
 let defaultRow = getDefaultRow(props.tableConfig);
 function getDefaultRow(columns) {
   const row = {};
@@ -78,7 +78,7 @@ function addLine() {
     ...defaultRow,
     rowKey: uuidv4(),
   };
-  tableData.push(row);
+  tableData.value.push(row);
   onChange();
 }
 function loopDel (rowKey, data) {
@@ -94,7 +94,7 @@ function loopDel (rowKey, data) {
   }
 }
 function deleteRow({rowKey}) {
-  loopDel(rowKey, tableData)
+  loopDel(rowKey, tableData.value)
   onChange();
 }
 function addChildren(row) {
@@ -112,11 +112,16 @@ function onFieldChange(row, name, value) {
   onChange();
 }
 function onChange() {
-  emit('change', tableData);
+  emit('change', tableData.value);
 }
 
 watch(() => props.tableConfig, (newValue) => {
   defaultRow = getDefaultRow(newValue);
+})
+
+watch(() => props.modelValue, (newValue) => {
+  console.log('--- table modelValue: ', newValue)
+  tableData.value = newValue;
 })
 
 </script>

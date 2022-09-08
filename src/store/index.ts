@@ -3,6 +3,7 @@ import components from './modules/components';
 import graph from './modules/graph';
 import context from './modules/context';
 import transform from './modules/transform';
+import options from './modules/options';
 
 export const store = createStore({
   modules: {
@@ -10,5 +11,6 @@ export const store = createStore({
     context,
     transform,
     components,
+    options,
   }
 })

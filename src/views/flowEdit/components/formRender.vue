@@ -55,6 +55,7 @@
               <div class="sys-label">{{ subField.title }}</div>
               <field-factory
                 :node-data="subField"
+                :node-kind="node.kind"
                 v-model="dialogForm[subField.name]"
                 :properties="dialogForm"
                 @input="updateDialogForm"
@@ -148,7 +149,7 @@ function getExtendData(modelData) {
     _dialogForm[modelData.name] = properties.value[modelData.name] || (modelData.multiple || ['treeTable', 'table'].includes(modelData.form) ? [] : '');
   }
   dialogForm.value = {...properties.value, ..._dialogForm};
-  console.log('--- dialogForm: ', dialogForm.value)
+  console.log('--- dialogForm: ', props.node.kind, dialogForm.value)
 }
 
 function onSubmit() {
@@ -167,7 +168,6 @@ function onSubmit() {
 }
 
 function onDialogClosed() {
-  console.log('--- dialog closed')
   // database 和rest 组件的弹窗关闭时，execute 置空
   if (['database', 'rest'].includes(props.node.kind)) store.state.execute = '';
 }
@@ -185,7 +185,6 @@ function handleExecute() {
 }
 
 function onSelectExpression(exp: string) {
-  console.log('--- onSelectExpression: ', exp)
   if (focusInputName) {
     dialogForm.value[focusInputName] = exp;
   }
