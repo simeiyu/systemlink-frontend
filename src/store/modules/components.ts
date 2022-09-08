@@ -9,6 +9,7 @@ export interface Group {
   processorType?: string;
   processorMetaVOList?: Group[];
   isTrigger?: boolean;
+  metaInfo?: string;
 }
 
 export default {
@@ -48,20 +49,22 @@ export default {
             const children = map(item.processorMetaVOList, proc => {
               const { name, icon, description, processorType, isTrigger } = proc;
               componentInfo[processorType] = proc;
+              const node = {
+                name,
+                icon,
+                description,
+                processorType,
+                isTrigger,
+              };
               if (proc.processorType === 'choice') {
                 // 决策设置中有branches
                 const metaInfo = JSON.parse(proc.metaInfo);
                 forEach(metaInfo.branches, branch => {
                   componentInfo[branch.processorType] = branch;
                 });
+                node.metaInfo = proc.metaInfo;
               }
-              return {
-                name,
-                icon,
-                description,
-                processorType,
-                isTrigger,
-              }
+              return node
             });
             return {
               name: item.name,

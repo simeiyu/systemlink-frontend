@@ -46,7 +46,9 @@ export default {
         //   "component": "DataConnector",
         //   "componentType": "DataBase"
         // })
-        // dispatch('graph/fetchFlow', "99ec0780f39211ec84c5bfc02d1bcaa4", {root: true});
+        // dispatch('graph/fetchFlow', "99ec0780f39211ec84c5bfc02d1bcaa4", { root: true })
+        // dispatch('components/fetchList', null, { root: true })
+        // dispatch('transform/fetchList', null, { root: true })
       })
     },
     setExpression({commit, state}, payload) {

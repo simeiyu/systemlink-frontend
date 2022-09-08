@@ -232,6 +232,7 @@ function initEditor() {
         if (cell.isNode()) {
           const parent = cell.getParent()
           if (parent) {
+            if (parent.getData().kind === 'choice') return cell.getBBox()
             return parent.getBBox()
           }
         }
@@ -402,23 +403,10 @@ function initEditor() {
       const metaInfo = store.getters['components/metaInfo'](kind);
       if (metaInfo) {
         metaInfo.branches.forEach((item)=>{
-          const child = branch.create(graph, node, item);
-          // processor.processors.push({
-          //   processorId: child.id,
-          //   name: get(child, 'data.name', ''),
-          //   kind: item.processorType,
-          //   properties: {},
-          //   output: ''
-          // })
+          branch.create(graph, node, item);
         });
       }
     }
-    // 将节点加入到flowOut.processors
-    // const item = { parentId: parentId, processor };
-    // if (parentId) {
-    //   item.grantId = item.parent?.getParentId();
-    // }
-    // console.log('add ', kind, item)
     save();
     store.dispatch('graph/addProcessor', processor);
   })
@@ -467,6 +455,15 @@ function initEditor() {
     const cells = graph.getSelectedCells();
     if (cells.length) {
       graph.removeCells(cells)
+    }
+  })
+
+  graph.on('node:change:size', ({node, options}) => {
+    // 决策分支内的when或otherwise移动
+    if (['when', 'otherwise'].includes(node.data.kind)) {
+      const choice = node.getParent();
+      // const children = choice?.getChildren();
+
     }
   })
 
@@ -538,6 +535,7 @@ function dropNode(evt: any, nodeData: any) {
         data: {
           name,
           kind: processorType,
+          metaInfo: nodeData.metaInfo
         }
       });
       break;

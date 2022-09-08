@@ -16,12 +16,15 @@ export default {
       node.resize(bbox.width, _y + height + footerHeight)
     }
     let py = y + _y;
-    if (processorType === 'otherwise' && index) {
-      children.forEach(item => {
-        const pos = item.position();
-        item.position(pos.x, pos.y + height + space);
+    if (processorType === 'when' && index) {
+      const otherwise = children.find(item => {
+        return item.getData().kind === 'otherwise'
       })
-      py = y + top + space;
+      if (otherwise) {
+        const pos = otherwise.position();
+        otherwise.position(pos.x, py);
+        py = pos.y;
+      }
     }
     const child = graph.createNode({
       x: x + space,
@@ -45,7 +48,13 @@ export default {
         },
       },
     });
-    node.addChild(child);
+    console.log('--- branch: ', processorType, child.id)
+    if (processorType === 'when' && index) {
+      node.insertChild(child, index - 1)
+    } else {
+      node.addChild(child);
+    }
+    console.log('--- branch node: ', node)
     return child;
   }
 }
