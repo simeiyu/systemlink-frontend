@@ -21,7 +21,7 @@ export default {
   getters: {
     metaInfo: (state) => (kind) => {
       const metaInfo = get(state.componentInfo, `${kind}.metaInfo`, '');
-      console.log('--- node metaInfo: ', typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo))
+      // console.log('--- node metaInfo: ', typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo))
       return typeof metaInfo === 'object' ? metaInfo : JSON.parse(metaInfo);
     },
     getByType: (state) => (type) => state.componentInfo[type],

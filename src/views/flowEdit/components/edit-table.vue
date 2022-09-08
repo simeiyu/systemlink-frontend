@@ -120,7 +120,6 @@ watch(() => props.tableConfig, (newValue) => {
 })
 
 watch(() => props.modelValue, (newValue) => {
-  console.log('--- table modelValue: ', newValue)
   tableData.value = newValue;
 })
 

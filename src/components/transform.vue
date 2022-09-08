@@ -7,7 +7,7 @@
       <el-form-item label="转换方法" style="margin-bottom: 0">
         <el-select v-model="transform.properties.type" placeholder="选择转换方法" @change="onTypeChange">
           <el-option
-            v-for="item in list"
+            v-for="item in options"
             :key="item.type"
             :label="item.name"
             :value="item.type"
@@ -44,7 +44,8 @@
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
 import { useStore } from 'vuex';
-import { find } from 'lodash';
+import { get } from 'lodash';
+import { ActiveNode } from '@/store/modules/graph';
 import Inputs from '@/components/inputs.vue'
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 
@@ -57,13 +58,18 @@ interface MetaInfo {
   [key:string]: any;
 }
 
+interface Props {
+  activeNode: ActiveNode;
+}
+
+const props = defineProps<Props>()
+
 const store = useStore();
 // 是否显示弹窗
 let visible:boolean = computed(() => store.state.transform.modal.visible);
 // 编辑的tranform
 let transform = ref<Transform>({});
-// transform 元数据列表
-let list = computed(() => store.state.transform.list);
+let options = computed(store.getters['transform/options']);
 // 选择类型后的元数据
 let metaInfo = ref<MetaInfo | null>()
 // 处于焦点中的输入框
@@ -72,22 +78,13 @@ let saving = computed(() => store.state.transform.saving);
 
 
 watch(() => store.state.transform.modal.transform, (value) => {
-  if (value) {
-    transform.value = value;
-    if (value.properties.type) {
-      const active = find(list.value, ({type}) => type === value.properties.type);
-      metaInfo.value = active && active.metaInfo;
-    }
-  } else {
-    transform.value = {};
-    metaInfo.value = null;
-  }
-  console.log('--- transform metaInfo: ', transform.value, metaInfo.value)
+  const type = get(value, 'transformType')
+  transform.value = store.getters['transform/getById'](props.activeNode.id);
+  metaInfo.value = store.getters['transform/getMetaInfo'](type);
 })
 
 function onTypeChange(val) {
-  const active = find(list.value, ({type}) => type === val);
-  metaInfo.value = active && active.metaInfo;
+  metaInfo.value = store.getters['transform/getMetaInfo'](val);
 }
 
 function updateProperties({name, value}) {
@@ -105,7 +102,6 @@ function onSelectExpression(exp: string) {
 }
 
 function onSubmit() {
-  console.log('--- submit transform: ', transform.value)
   store.dispatch('transform/save', transform.value);
   store.commit('transform/openModal', {visible: false});
 }

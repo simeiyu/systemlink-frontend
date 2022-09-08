@@ -233,13 +233,14 @@ watch(() => store.state.options.data[url.value], (newValue, oldValue) => {
   }
 })
 watch(() => store.state.context.expression, (newValue, oldValue) => {
-  if (isFocus.value && ['input', 'textArea'].includes(props.nodeData.form)) {
+  if (newValue && isFocus.value && ['input', 'textArea'].includes(props.nodeData.form)) {
     const start = refField.value.ref.selectionStart;
     const end = refField.value.ref.selectionEnd;
     const prev = fieldValue.value.slice(0, start);
     const next = fieldValue.value.slice(end);
     fieldValue.value = prev + newValue + next;
     emit('input', {name: props.nodeData.name, value: fieldValue.value})
+    store.dispatch('context/setExpression', '')
   }
 })
 watch(() => props.properties, (newValue, oldValue) => {

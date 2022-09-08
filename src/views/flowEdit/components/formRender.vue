@@ -120,7 +120,6 @@ function updateProperties({name, value}) {
     [`${name}`]: value
   }
   properties.value = _properties;
-  console.log('--- input: ', _properties)
   store.dispatch('graph/setProperties', {
     properties: _properties,
     processorId: props.node.id,
@@ -149,7 +148,6 @@ function getExtendData(modelData) {
     _dialogForm[modelData.name] = properties.value[modelData.name] || (modelData.multiple || ['treeTable', 'table'].includes(modelData.form) ? [] : '');
   }
   dialogForm.value = {...properties.value, ..._dialogForm};
-  console.log('--- dialogForm: ', props.node.kind, dialogForm.value)
 }
 
 function onSubmit() {

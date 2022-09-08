@@ -40,7 +40,6 @@ export default {
       state.showRule = showRule
     },
     setProcessors(state, processors) {
-      console.log('--- processors: ', processors)
       if (!isEmpty(processors)) {
         const mapper = {};
         const loopProper = function(data, parentProcessorId) {
@@ -55,7 +54,6 @@ export default {
           })
         }
         loopProper(processors, undefined);
-        console.log('--- processor: ', mapper)
         state.processor = mapper;
       }
     },
@@ -88,13 +86,13 @@ export default {
     fetchFlow({commit, dispatch}, payload) {
       FlowRoute.get(payload).then((res: any) => {
         if (res.code === 200) {
-          const {routeJson, showRule} = res.data;
+          const { showRule} = res.data;
           showRule && commit('setShowRule', JSON.parse(showRule));
-          if (routeJson) {
-            const flowOut = JSON.parse(routeJson);
-            commit('setProcessors', flowOut.processors);
-            dispatch('transform/setTransforms', flowOut.transforms, { root: true });
-          }
+          // if (routeJson) {
+          //   const flowOut = JSON.parse(routeJson);
+          //   commit('setProcessors', flowOut.processors);
+          //   dispatch('transform/setTransforms', flowOut.transforms, { root: true });
+          // }
         }
       })
     },
@@ -165,7 +163,7 @@ export default {
         nodeId: nodeId,
         showRule: JSON.stringify(payload),
       }).then((res: any) => {
-        console.log('--- save: ', res)
+        // console.log('--- save: ', res)
       })
     },
     // 启动集成流
@@ -191,7 +189,7 @@ export default {
       const userId = rootGetters['context/userId'];
       commit('setLoading', {key: 'turnOff', loading: true});
       FlowRoute.turnOff({appId, nodeId, userId}).then((res: any) => {
-        console.log('---- turn off: ', res);
+        // console.log('---- turn off: ', res);
         if (res.code === 200) {
           commit('setStatus', '');
         } else {

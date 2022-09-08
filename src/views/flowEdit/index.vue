@@ -71,7 +71,7 @@
       </el-tabs>
     </div>
   </div>
-  <transform />
+  <transform :active-node="activeNode" />
 </template>
 
 <script lang="ts" setup>
@@ -319,7 +319,7 @@ function initEditor() {
     showPorts(ports, false)
   })
   graph.on('node:embedded', ({node, currentParent, previousParent}) => {
-    console.log('--- node embedded: ', node, currentParent, previousParent)
+    // console.log('--- node embedded: ', node, currentParent, previousParent)
     if (currentParent && currentParent.isNode()) {
       if (previousParent?.id !== currentParent.id) {
         save()
@@ -475,7 +475,6 @@ function initEditor() {
 
   // 连线后更新下游节点的 processor.sourceProcessorId
   graph.on('edge:connected', ({ isNew, edge }) => {
-    console.log('--- edge connected: ', isNew, edge.target.cell, edge.source.cell)
     if (isNew) {
       const source = edge.getSourceCell();
       const target = edge.getTargetCell();
@@ -489,7 +488,6 @@ function initEditor() {
   // 连线删除
   graph.on('edge:removed', ({ edge }) => {
     const target = edge.getTargetCell();
-    console.log('--- edge removed: ', target)
     if (target) {
       const processorId = target?.id;
       store.dispatch('graph/saveProcessor', { sourceProcessorId: '', processorId })

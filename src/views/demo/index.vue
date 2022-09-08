@@ -281,7 +281,7 @@ export default {
         },
       })
       graph.on('node:click', ({node}) => {
-        console.log(node)
+        // console.log(node)
         cusModel.value = node.data as Object;
       })
       // 控制连接桩显示/隐藏

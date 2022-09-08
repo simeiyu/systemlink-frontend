@@ -53,7 +53,6 @@ function onToggle () {
 function onAddBranch () {
   const metaInfo = JSON.parse(node.getData().metaInfo);
   const item = metaInfo.branches.find(item => item.processorType === 'when');
-  console.log('--- when： ', item)
   branch.create(graph, node, item);
 }
 node.on('change:data', ({current}) => {

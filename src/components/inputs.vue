@@ -86,8 +86,7 @@ function loopUpstream(data) {
       id: key,
       label: title,
       type: type,
-      expression: expression,
-      // hasChildren: false
+      expression: expression
     }
     if (toLower(type) === 'jsonarray') {
       item.index = 0
@@ -95,6 +94,8 @@ function loopUpstream(data) {
     if (!isEmpty(properties)) {
       item.children = loopUpstream(properties);
       item.hasChildren = true;
+    } else {
+      item.leaf = true
     }
     return item
   })
@@ -132,15 +133,10 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
       console.log('--- res: ', res)
       let transformList: Tree[] = [];
       if (res.data) {
+        store.commit('transform/setTransforms', res.data)
         transformList = map(res.data, item => {
-          const { currentProcessor, properties, output, transformId, processorId, transformType, name } = item;
-          store.commit('transform/update', {
-            processorId,
-            transformId,
-            properties,
-            output: JSON.parse(output),
-          });
-          return {
+          const { currentProcessor, output, transformId, processorId, transformType, name } = item;
+          const trans = {
             id: transformId,
             label: name,
             action: {
@@ -153,8 +149,14 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
               transformType,
               currentProcessor,
             },
-            leaf: true
           }
+          if (output) {
+            trans.hasChildren = true;
+            trans.children = loopUpstream(JSON.parse(output));
+          } else {
+            trans.leaf = true
+          }
+          return trans
         });
       }
       return resolve(transformList)
@@ -167,15 +169,14 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
 }
 
 function openTransform (node, data) {
-  const transformId = data.id !== '222' ? data.id : null;
-  store.commit('transform/openModal', {visible: true, transformId, processorId: activeNode.value.id})
+  console.log('--- open transform: ', data.transform)
+  store.commit('transform/openModal', {visible: true, transform: data.transform})
 }
 function handleNodeClick (data: Tree, node) {
   let exp = get(data, 'expression', '');
   if (node.parent && get(node.parent, 'data.type') === 'JSONArray') {
     const index = get(node.parent, 'data.index');
     exp = exp.replace('*', index);
-    console.log('--- exp: ', index, exp)
   }
   store.dispatch('context/setExpression', exp)
 }

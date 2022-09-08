@@ -6,8 +6,11 @@ import { Transform } from '@/api/api';
 export interface Transformer {
   transformId: string;
   processorId: string;
-  properties: any[];
+  properties: object;
   output: {};
+  transformType: string;
+  name: string;
+  [propName:string]: any;
 }
 
 export default {
@@ -22,19 +25,28 @@ export default {
     saving: false,
   }),
   getters: {
-    getByProcessorId: (state) => (processorId) => {
-      if (isEmpty(processorId)) return []
-      return filter(state.transforms, item => item.processorId === processorId)
+    getById: (state) => (processorId) => {
+      const transformId = get(state.modal.transform, 'transformId')
+      return find(state.transforms, item => item.transformId === transformId) || {
+        transformId: uuidv4(),
+        processorId: processorId,
+        properties: { name: '', type: '' },
+        output: {}
+      }
     },
-    get: (state) => () => state.transforms,
-    list: (state) => () => state.list,
-    current: (state) => () => state.modal.transform,
-    visible: (state) => () => state.modal.visible,
-    saving: (state) => () => state.saving,
+    options: (state) => () => map(state.list, item => ({type: item.type, name: item.name})),
+    getMetaInfo: (state) => (type) => {
+      const item = find(state.list, item => item.type === type);
+      if (item) return item.metaInfo || {}
+      return {}
+    }
   },
   mutations: {
     setTransforms(state, payload) {
-      state.transforms = payload
+      state.transforms = map(payload, item => ({
+        ...item,
+        properties: JSON.parse(item.properties),
+      }));
     },
     // transform的元数据
     setList(state, payload) {
@@ -49,15 +61,10 @@ export default {
       })
     },
     // 新增或编辑Transform
-    openModal(state, {visible, transformId, processorId}) {
+    openModal(state, {visible, transform}) {
       state.modal.visible = visible;
       if (visible) {
-        state.modal.transform = transformId ? find(state.transforms, {transformId}) : {
-          transformId: uuidv4(),
-          processorId: processorId,
-          properties: { name: '', type: '' },
-          output: {}
-        }
+        state.modal.transform = transform;
       } else {
         state.modal.transform = null;
       }
@@ -78,9 +85,6 @@ export default {
       Transform.getList().then((res: any) => {
         commit('setList', res.data);
       })
-    },
-    setTransforms({commit}, payload) {
-      commit('setTransforms', payload)
     },
     // 保存转换方法
     save({commit, state, rootGetters}, payload) {
