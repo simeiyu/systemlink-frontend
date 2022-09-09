@@ -158,8 +158,10 @@ export default {
     },
     save({commit, rootGetters}, payload) {
       commit('setShowRule', payload)
+      const appId = rootGetters['context/appId']();
       const nodeId = rootGetters['context/nodeId']();
       FlowRoute.save({
+        appId: appId,
         nodeId: nodeId,
         showRule: JSON.stringify(payload),
       }).then((res: any) => {
@@ -168,9 +170,9 @@ export default {
     },
     // 启动集成流
     turnOn({commit, state, rootGetters}) {
-      const appId = rootGetters['context/appId'];
-      const nodeId = rootGetters['context/nodeId'];
-      const userId = rootGetters['context/userId'];
+      const appId = rootGetters['context/appId']();
+      const nodeId = rootGetters['context/nodeId']();
+      const userId = rootGetters['context/userId']();
       commit('setStatus', 'running');
       FlowRoute.turnOn({appId, nodeId, userId}).then((res: any) => {
         if (res.code !== 200) {
@@ -184,9 +186,9 @@ export default {
     },
     // 关闭集成流
     turnOff({commit, state, rootGetters}) {
-      const appId = rootGetters['context/appId'];
-      const nodeId = rootGetters['context/nodeId'];
-      const userId = rootGetters['context/userId'];
+      const appId = rootGetters['context/appId']();
+      const nodeId = rootGetters['context/nodeId']();
+      const userId = rootGetters['context/userId']();
       commit('setLoading', {key: 'turnOff', loading: true});
       FlowRoute.turnOff({appId, nodeId, userId}).then((res: any) => {
         // console.log('---- turn off: ', res);
@@ -201,8 +203,8 @@ export default {
       })
     },
     // 节点测试执行
-    execute({commit, state}, {processorType, processorId, properties}) {
-      const { appId } = state.spContext;
+    execute({commit, state, rootGetters}, {processorType, processorId, properties}) {
+      const appId = rootGetters['context/appId']();
       commit('setLoading', {key: "execute", loading: true});
       ProcessorInstance.execute(processorType, { processorId, properties, appId }).then((res: any) => {
         commit('execute', res.data || res.msg)

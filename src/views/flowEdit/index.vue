@@ -78,7 +78,7 @@
 import { onMounted, Ref, ref, createVNode, computed, provide, watch } from "vue";
 import { Graph, Addon, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
-import { get, filter, map } from 'lodash';
+import { get, filter, map, findIndex } from 'lodash';
 import { ElMessage } from 'element-plus';
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
@@ -244,11 +244,13 @@ function initEditor() {
       enabled: true,
       findParent({node}) {
         const bbox = node.getBBox()
-        return this.getNodes().filter((node) => {
+        const kind = node.getData().kind;
+        if (kind === 'when' || kind === 'otherwise') return []
+        return this.getNodes().filter((item) => {
           // 只有 data.kind 为 when、otherwise 或 loop 的节点才是父节点
-          const data = node.getData<any>()
+          const data = item.getData<any>()
           if (data && ['choice', 'when', 'otherwise', 'loop'].includes(data.kind)) {
-            const targetBBox = node.getBBox()
+            const targetBBox = item.getBBox()
             return bbox.isIntersectWithRect(targetBBox)
           }
           return false
@@ -260,6 +262,7 @@ function initEditor() {
       minWidth: 90,
       minHeight: 90,
     },
+    scaling: { min: 0.1, max: 5},
     snapline: true,
     clipboard: true,
   });
@@ -323,8 +326,8 @@ function initEditor() {
     // console.log('--- node embedded: ', node, currentParent, previousParent)
     if (currentParent && currentParent.isNode()) {
       if (previousParent?.id !== currentParent.id) {
-        save()
-        // store.commit('updateProcessor', {nodeId: node.id, parentId: currentParent.id, prevParentId: previousParent?.id});
+        save();
+        store.dispatch('graph/saveProcessor', { processorId: node.id, parentProcessorId: currentParent.id });
       }
       // let originSize = currentParent.prop('originSize')
       // if (originSize == null) {
@@ -388,7 +391,6 @@ function initEditor() {
   graph.on('node:added', ({node, index, options}) => {
     const kind = get(node, 'data.kind');
     const parentId = node.getParentId();
-    // if ((kind === 'when' || kind === 'otherwise') && !store.getters.getProcessor(parentId)) return;
     const processor: Processor = {
       parentProcessorId: parentId,
       processorId: node.id,
@@ -458,14 +460,75 @@ function initEditor() {
     }
   })
 
-  graph.on('node:change:size', ({node, options}) => {
-    // 决策分支内的when或otherwise移动
+  graph.on('node:change:size', ({node, current, previous}) => {
+      // console.log('--- size: ', node, current, previous)
+    // 决策分支内的when或otherwise, 向右|下改变size
     if (['when', 'otherwise'].includes(node.data.kind)) {
       const choice = node.getParent();
-      // const children = choice?.getChildren();
-
+      if (choice) {
+        const children = choice?.getChildren();
+        const padding = [68, 20, 48, 20];
+        let { x, y, width, height } = choice.getBBox();
+        let left = x + padding[3];
+        const index = findIndex(children, item => item.id === node.id);
+        const my = current?.height - previous?.height;
+        let right = 0
+        children?.forEach((child, i) => {
+          const box = child.getBBox();
+          const r = box.x + box.width;
+          if (box.x < left) left = box.x;
+          if (r > right) right = r;
+          if (i > index) {
+            child.prop('position', {x: box.x, y: box.y + my})
+          }
+        });
+        choice.prop({
+          'size': {width: right - left + padding[1] + padding[3], height: height + my},
+        })
+      }
+    // } else if (node.data.kind === 'choice') {
+    //   // 决策节点大小改变
+    //   const padding = [68, 20, 48, 20];
+    //   const children = node.getChildren();
+    //   const pos = node.getPosition();
+    //   let left = pos.x + padding[3];
+    //   let top = pos.y + padding[0];
+    //   let minX;
+    //   let minY;
+    //   children?.forEach(child => {
+    //     const { x, y } = child.getPosition();
+    //     if (!minX || x < minX) minX = x;
+    //     if (!minY || y < minY) minY = y;
+    //   });
+    //   console.log('--- choice: ', left, top)
+    //   console.log('=== choice: ', minX, minY)
+    //   if (minX !== left || minY !== top) {
+    //     node.prop('position', { x: minX - padding[3], y: minY - padding[0]});
+    //   }
     }
   })
+  // graph.on('node:change:position', ({node, current, previous}) => {
+  //   // 移动位置，及 向上|左改变size
+  //   if (['when', 'otherwise'].includes(node.data.kind)) {
+  //     const choice = node.getParent();
+  //     if (choice) {
+  //       const mx = current.x - previous?.x;
+  //       const my = current.y - previous?.y;
+  //       const children = choice?.getChildren();
+  //       const index = findIndex(children, item => item.id === node.id);
+  //       let left;
+  //       children?.forEach((child, i) => {
+  //         const { x, y } = child.getPosition();
+  //         if (!left || x < left) {
+  //           left = x;
+  //         }
+  //         if (my && i < index) {
+  //           child.prop('position', {x, y: y + my});
+  //         }
+  //       })
+  //     }
+  //   }
+  // })
 
   // 节点移动后
   graph.on('node:moved',() => save())

@@ -90,7 +90,7 @@ export default {
     save({commit, state, rootGetters}, payload) {
       commit('update', payload);
       state.saving = true;
-      const nodeId = rootGetters['context/nodeId']
+      const nodeId = rootGetters['context/nodeId']();
       const { processorId, transformId, properties, output } = payload;
       Transform.saveItem({
         nodeId,
