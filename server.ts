@@ -11,7 +11,7 @@ axios.defaults.ContentType = 'application/json;charset=UTF-8';
 
 const dist = __dirname + '/dist';
 const app = express();
-let port = 3002;
+let port = 3004;
 let AppId = '77800';
 let NodeId = '99ec0780f39211ec84c5bfc02d1bcaa4';
 let UserId = 1000184;
@@ -33,6 +33,7 @@ app.set('views', dist);
 app.use('/systemlink*', async (req, res, next) => {
   const { originalUrl, method, params, body } = req;
   let result;
+  console.log('--- /systemlink: ', method, originalUrl)
   switch(method) {
     case 'GET':
       result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`, method, params});
@@ -40,12 +41,17 @@ app.use('/systemlink*', async (req, res, next) => {
     case 'POST':
       result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`,method, data: body});
       break;
+    case 'DELETE':
+      result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`,method, params});
+      break;
   }
   const { status, data } = result;
+  console.log('=== /systemlink: ', status, data)
   res.send(data);
   next();
 });
 app.get('/sp/context', (req, res) => {
+  console.log('--- /sp/context: ', Parameter.AppId || AppId)
   res.send({
     success: true,
     data: {

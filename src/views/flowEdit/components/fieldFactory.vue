@@ -43,13 +43,11 @@
 <script lang="ts" setup>
 import DatePicker from 'ant-design-vue/lib/date-picker'; // 加载 JS
 import 'ant-design-vue/lib/date-picker/style/css'; // 加载 CSS
-import { ref, defineEmits, watch, markRaw, onMounted, inject, computed } from "vue";
-import { forEach, isEmpty, findIndex, map, get } from 'lodash';
+import { ref, watch, markRaw, onMounted, inject, computed } from "vue";
+import { forEach, isEmpty, findIndex, map } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from 'vuex';
-import { ElMessage } from 'element-plus';
 import EditTable from "@/views/flowEdit/components/edit-table.vue";
-import { NodeGroup } from '@/api/api';
 import { ActiveNode } from '@/store/modules/graph';
 
 const emit = defineEmits(['input'])

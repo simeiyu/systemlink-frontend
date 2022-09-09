@@ -85,7 +85,7 @@
 </template>
 
 <script lang="ts" setup>
-import { watch, ref, defineProps, inject, computed } from "vue";
+import { watch, ref, inject, computed } from "vue";
 import { useStore } from 'vuex';
 import { map, filter, get } from 'lodash';
 import { ActiveNode } from '@/store/modules/graph';

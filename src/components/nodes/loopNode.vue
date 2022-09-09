@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, reactive, onMounted } from "vue-demi";
+import { inject, ref, reactive } from "vue";
 
 const getNode = inject("getNode");
 const node = getNode();

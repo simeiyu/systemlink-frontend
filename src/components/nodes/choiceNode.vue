@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, ref, reactive } from "vue-demi";
+import { inject, ref, reactive } from "vue";
 import branch from "@/utils/choice/branch";
 
 const getNode = inject("getNode");

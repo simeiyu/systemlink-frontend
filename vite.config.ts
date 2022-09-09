@@ -61,7 +61,7 @@ export default defineConfig({
             },
             '/sp': {
               changeOrigin: true,
-              target: 'http://localhost:3003/'
+              target: 'http://localhost:3004/'
             },
         },
     },
@@ -70,7 +70,7 @@ export default defineConfig({
         minify:'terser',
         target: "es2020", //指定es版本,浏览器的兼容性
         outDir: "dist", //指定打包输出路径
-        assetsDir: "static", //指定静态资源存放路径
+        assetsDir: "assets", //指定静态资源存放路径
         cssCodeSplit: true, //css代码拆分,禁用则所有样式保存在一个css里面
         sourcemap: false, //是否构建source map 文件
         terserOptions: {
@@ -81,6 +81,9 @@ export default defineConfig({
             },
         },
         chunkSizeWarningLimit: 10000,
+    },
+    define: {
+      'process.env': process.env
     },
     plugins: [
         vue(),

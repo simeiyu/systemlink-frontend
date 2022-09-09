@@ -31,8 +31,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineEmits, reactive, ref, watch } from "vue";
-import { forEach, findIndex, remove, isEmpty } from "lodash";
+import { computed, ref, watch } from "vue";
+import { forEach, isEmpty } from "lodash";
 import { v4 as uuidv4 } from 'uuid';
 import FieldFactory from "@/views/flowEdit/components/fieldFactory.vue";
 
