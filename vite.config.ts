@@ -59,7 +59,7 @@ export default defineConfig({
                 changeOrigin: true,
                 // rewrite: (path) => path.replace(/^\/api/, ""),
             },
-            '/sp': {
+            '/sp/context': {
               changeOrigin: true,
               target: 'http://localhost:3004/'
             },

@@ -4,9 +4,10 @@ const cors = require('cors');
 const axios = require('axios');
 const { Parameter } = require('suanpan_node_sdk');
 
+// const systemlinkEndpoint = 'http://sp7.iamzju.com:30080';
 const systemlinkEndpoint = 'http://systemlink-web-service.systemlink:8080';
 axios.defaults.timeout = 60000;
-axios.defaults.withCredentials = false;
+axios.defaults.withCredentials = true;
 axios.defaults.ContentType = 'application/json;charset=UTF-8';
 
 const dist = __dirname + '/dist';
@@ -33,7 +34,6 @@ app.set('views', dist);
 app.use('/systemlink*', async (req, res, next) => {
   const { originalUrl, method, params, body } = req;
   let result;
-  console.log('--- /systemlink: ', method, originalUrl)
   switch(method) {
     case 'GET':
       result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`, method, params});
@@ -46,12 +46,10 @@ app.use('/systemlink*', async (req, res, next) => {
       break;
   }
   const { status, data } = result;
-  console.log('=== /systemlink: ', status, data)
   res.send(data);
   next();
 });
 app.get('/sp/context', (req, res) => {
-  console.log('--- /sp/context: ', Parameter.AppId || AppId)
   res.send({
     success: true,
     data: {
@@ -59,6 +57,8 @@ app.get('/sp/context', (req, res) => {
       nodeId: Parameter.NodeId || NodeId,
       userId: Parameter.UserId || UserId,
       componentId: Parameter.ComponentId || ComponentId,
+      component: process.argv[2],
+      componentType: process.argv[3]
     }
   })
 });

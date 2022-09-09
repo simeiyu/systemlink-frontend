@@ -98,6 +98,7 @@ export class ProcessorInstance {
 
 export class Suanpan {
   static async getContext() {
-    return request('/sp/context')
+    const prefix = location.href.replace('/#/', '/')
+    return request(`${prefix}sp/context`)
   }
 }
