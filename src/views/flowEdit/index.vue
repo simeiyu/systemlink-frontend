@@ -32,7 +32,7 @@
     <!-- 画布区域 -->
     <div class="flow-left">
       <div class="flow-box" id="boxRf"></div>
-      <div class="flow-bottom"></div>
+      <!-- <div class="flow-bottom"></div> -->
     </div>
     <!-- 右侧组件栏、设置项 -->
     <div class="tool-box">
@@ -215,12 +215,12 @@ function initEditor() {
     },
     selecting: {
       enabled: true,
-      rubberband: true,
+      rubberband: false,   // 是否启用框选
       showNodeSelectionBox: true,
-      showEdgeSelectionBox: true,
+      showEdgeSelectionBox: false,
       // choice组件在画布中不选中
       // filter(node) {
-      //   return !node.component || node.component !== 'choiceNode';
+      //   return !['choice', 'when', 'otherwise', 'loop'].includes(node.data.kind);
       // },
       // 有节点被选中，其他事件依然响应
       pointerEvents: 'none',
@@ -258,7 +258,7 @@ function initEditor() {
       }
     },
     resizing: {
-      enabled: true,
+      enabled: (node) => ['when', 'otherwise', 'choice', 'loop'].includes(node.data.kind),
       minWidth: 90,
       minHeight: 90,
     },
@@ -461,9 +461,9 @@ function initEditor() {
   })
 
   graph.on('node:change:size', ({node, current, previous}) => {
-      // console.log('--- size: ', node, current, previous)
     // 决策分支内的when或otherwise, 向右|下改变size
     if (['when', 'otherwise'].includes(node.data.kind)) {
+      // console.log('--- size: ', node, current, previous)
       const choice = node.getParent();
       if (choice) {
         const children = choice?.getChildren();
@@ -486,25 +486,25 @@ function initEditor() {
           'size': {width: right - left + padding[1] + padding[3], height: height + my},
         })
       }
-    // } else if (node.data.kind === 'choice') {
-    //   // 决策节点大小改变
-    //   const padding = [68, 20, 48, 20];
-    //   const children = node.getChildren();
-    //   const pos = node.getPosition();
-    //   let left = pos.x + padding[3];
-    //   let top = pos.y + padding[0];
-    //   let minX;
-    //   let minY;
-    //   children?.forEach(child => {
-    //     const { x, y } = child.getPosition();
-    //     if (!minX || x < minX) minX = x;
-    //     if (!minY || y < minY) minY = y;
-    //   });
-    //   console.log('--- choice: ', left, top)
-    //   console.log('=== choice: ', minX, minY)
-    //   if (minX !== left || minY !== top) {
-    //     node.prop('position', { x: minX - padding[3], y: minY - padding[0]});
-    //   }
+    } else if (node.data.kind === 'choice') {
+      // 决策节点大小改变
+      const padding = [68, 20, 48, 20];
+      // const children = node.getChildren();
+      // const pos = node.getPosition();
+      // let left = pos.x + padding[3];
+      // let top = pos.y + padding[0];
+      // let minX;
+      // let minY;
+      // children?.forEach(child => {
+      //   const { x, y } = child.getPosition();
+      //   if (!minX || x < minX) minX = x;
+      //   if (!minY || y < minY) minY = y;
+      // });
+      // console.log('--- choice: ', left, top)
+      // console.log('=== choice: ', minX, minY)
+      // if (minX !== left || minY !== top) {
+      //   node.prop('position', { x: minX - padding[3], y: minY - padding[0]});
+      // }
     }
   })
   // graph.on('node:change:position', ({node, current, previous}) => {
@@ -739,7 +739,7 @@ onMounted(() => {
 
     .flow-box {
       box-sizing: border-box;
-      height: calc(85vh - 12px) !important;
+      height: 89vh !important;
       width: auto !important;
       margin: 24px;
       background: #fff;
