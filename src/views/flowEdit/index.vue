@@ -78,7 +78,7 @@
 import { onMounted, Ref, ref, createVNode, computed, provide, watch } from "vue";
 import { Graph, Addon, Shape, Dom, Node } from '@antv/x6';
 import { useStore } from 'vuex';
-import { get, filter, map, findIndex } from 'lodash';
+import { get, filter, map, findIndex, forEach } from 'lodash';
 import { ElMessage } from 'element-plus';
 import ports from "@/views/flowEdit/ports";
 import rectNode from "@/components/nodes/rectNode.vue";
@@ -258,7 +258,7 @@ function initEditor() {
       }
     },
     resizing: {
-      enabled: (node) => ['when', 'otherwise', 'choice', 'loop'].includes(node.data.kind),
+      enabled: (node) => ['when', 'otherwise', 'loop'].includes(node.data.kind),
       minWidth: 90,
       minHeight: 90,
     },
@@ -455,9 +455,20 @@ function initEditor() {
   })
   graph.bindKey('delete', () => {
     const cells = graph.getSelectedCells();
-    if (cells.length) {
-      graph.removeCells(cells)
-    }
+    forEach(cells, cell => {
+      if (cell.data.kind === 'otherwise') {
+        ElMessage.warning('决策组件中不能没有otherwise')
+      } else if (cell.data.kind === 'when') {
+        const when = filter(cell.getParent()?.getChildren(), item => item.data.kind === 'when');
+        if (when.length === 1) {
+          ElMessage.warning('决策组件中至少要有一个when')
+        } else {
+          graph.removeCell(cell)
+        }
+      } else {
+        graph.removeCell(cell)
+      }
+    })
   })
 
   graph.on('node:change:size', ({node, current, previous}) => {
@@ -478,9 +489,9 @@ function initEditor() {
           const r = box.x + box.width;
           if (box.x < left) left = box.x;
           if (r > right) right = r;
-          if (i > index) {
-            child.prop('position', {x: box.x, y: box.y + my})
-          }
+          // if (i > index) {
+          //   child.prop('position', {x: box.x, y: box.y + my})
+          // }
         });
         choice.prop({
           'size': {width: right - left + padding[1] + padding[3], height: height + my},
@@ -488,23 +499,29 @@ function initEditor() {
       }
     } else if (node.data.kind === 'choice') {
       // 决策节点大小改变
-      const padding = [68, 20, 48, 20];
-      // const children = node.getChildren();
-      // const pos = node.getPosition();
-      // let left = pos.x + padding[3];
-      // let top = pos.y + padding[0];
-      // let minX;
-      // let minY;
-      // children?.forEach(child => {
-      //   const { x, y } = child.getPosition();
-      //   if (!minX || x < minX) minX = x;
-      //   if (!minY || y < minY) minY = y;
-      // });
-      // console.log('--- choice: ', left, top)
-      // console.log('=== choice: ', minX, minY)
-      // if (minX !== left || minY !== top) {
-      //   node.prop('position', { x: minX - padding[3], y: minY - padding[0]});
-      // }
+      const space = 20;
+      const padding = [68, space, 48, space];
+      const children = node.getChildren();
+      const { x, y, width, height } = node.getBBox();
+      let left = x + padding[3];
+      let top = y + padding[0];
+      let childY = 0
+      let childrenHeight = 0;
+      children?.forEach((child) => {
+        const childBbox = child.getBBox();
+        child.prop({position: {x: left, y: top + childY}, size: {width: width - space * 2, height: childBbox.height}});
+        childY += childBbox.height + space;
+        childrenHeight += childY;
+      });
+      const moreHeight = height - padding[0] - padding[2] - childrenHeight;
+      if (moreHeight) {
+        const len = children?.length;
+        const plit = moreHeight / len;
+        children?.forEach((child) => {
+          const size = child.getSize();
+          child.prop('size', { width: size.width, height: size.height + plit })
+        })
+      }
     }
   })
   // graph.on('node:change:position', ({node, current, previous}) => {
@@ -624,7 +641,18 @@ function dropNode(evt: any, nodeData: any) {
 }
 
 function deleteNode(node) {
-  graph.removeCell(node.id);
+  if (node.data.kind === 'otherwise') {
+    ElMessage.warning('决策组件中不能没有otherwise')
+  } else if (node.data.kind === 'when') {
+    const when = filter(node.getParent()?.getChildren(), item => item.data.kind === 'when');
+    if (when.length === 1) {
+      ElMessage.warning('决策组件中至少要有一个when')
+    } else {
+      graph.removeCell(node)
+    }
+  } else {
+    graph.removeCell(node)
+  }
 }
 
 function updateName({ id, name, parentId, sourceId }) {
