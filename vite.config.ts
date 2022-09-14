@@ -88,6 +88,6 @@ export default defineConfig({
     plugins: [
         vue(),
         viteCommonjs(),
-        autoZip(),
+        // autoZip(),
     ],
 });

@@ -57,7 +57,7 @@ export class Transform {
    * @returns {Request} result
    */
   static async getList() {
-    return request('systemlink/transformMeta/list')
+    return request('/systemlink/transformMeta/list')
   }
   // 查询当前节点下的数据转换列表
   static async getTransforms(id) {
