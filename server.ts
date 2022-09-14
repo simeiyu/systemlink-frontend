@@ -13,7 +13,7 @@ axios.defaults.ContentType = 'application/json;charset=UTF-8';
 const dist = __dirname + '/dist';
 const app = express();
 let port = 3004;
-let AppId = '77800';
+let AppId = 77800;
 let NodeId = '99ec0780f39211ec84c5bfc02d1bcaa4';
 let UserId = 1000184;
 let ComponentId = 15130;
