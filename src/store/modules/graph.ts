@@ -86,13 +86,14 @@ export default {
     fetchFlow({commit, dispatch}, payload) {
       FlowRoute.get(payload).then((res: any) => {
         if (res.code === 200) {
-          const { showRule} = res.data;
-          showRule && commit('setShowRule', JSON.parse(showRule));
-          // if (routeJson) {
-          //   const flowOut = JSON.parse(routeJson);
-          //   commit('setProcessors', flowOut.processors);
-          //   dispatch('transform/setTransforms', flowOut.transforms, { root: true });
-          // }
+          const showRule = JSON.parse(res.data.showRule);
+          commit('setShowRule', showRule);
+          forEach(showRule.cells, cell => {
+            if (cell.shape !== 'edge') {
+              const data = cell.data || {}
+              dispatch('getProcessor', {processorId: cell.id, ...data})
+            }
+          })
         }
       })
     },
