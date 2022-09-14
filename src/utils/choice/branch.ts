@@ -48,13 +48,11 @@ export default {
         },
       },
     });
-    console.log('--- branch: ', processorType, child.id)
     if (processorType === 'when' && index) {
       node.insertChild(child, index - 1)
     } else {
       node.addChild(child);
     }
-    console.log('--- branch node: ', node)
     return child;
   }
 }

@@ -218,10 +218,6 @@ function initEditor() {
       rubberband: false,   // 是否启用框选
       showNodeSelectionBox: true,
       showEdgeSelectionBox: false,
-      // choice组件在画布中不选中
-      // filter(node) {
-      //   return !['choice', 'when', 'otherwise', 'loop'].includes(node.data.kind);
-      // },
       // 有节点被选中，其他事件依然响应
       pointerEvents: 'none',
     },
@@ -232,7 +228,7 @@ function initEditor() {
         if (cell.isNode()) {
           const parent = cell.getParent()
           if (parent) {
-            if (parent.getData().kind === 'choice') return cell.getBBox()
+            // if (parent.getData().kind === 'choice') return cell.getBBox()
             return parent.getBBox()
           }
         }
@@ -242,25 +238,23 @@ function initEditor() {
     },
     embedding: {
       enabled: true,
-      findParent({node}) {
-        const bbox = node.getBBox()
-        const kind = node.getData().kind;
-        if (kind === 'when' || kind === 'otherwise') return []
-        return this.getNodes().filter((item) => {
-          // 只有 data.kind 为 when、otherwise 或 loop 的节点才是父节点
-          const data = item.getData<any>()
-          if (data && ['choice', 'when', 'otherwise', 'loop'].includes(data.kind)) {
-            const targetBBox = item.getBBox()
-            return bbox.isIntersectWithRect(targetBBox)
-          }
-          return false
-        })
+      validate: ({child, parent}) => {
+        if (['when', 'otherwise'].includes(child.data.kind)) {
+          const parentSize = parent.getSize();
+          const size = child.getSize();
+          return parent.data.kind === 'choice' && size.width < parentSize.width && size.height < parentSize.height;
+        } else if (['when', 'otherwise', 'loop'].includes(parent.data.kind)) {
+          const parentSize = parent.getSize();
+          const size = child.getSize();
+          return size.width < parentSize.width && size.height < parentSize.height;
+        }
+        return false
       }
     },
     resizing: {
       enabled: (node) => ['when', 'otherwise', 'loop'].includes(node.data.kind),
-      minWidth: 90,
-      minHeight: 90,
+      minWidth: 122,
+      minHeight: 122,
     },
     scaling: { min: 0.1, max: 5},
     snapline: true,
@@ -322,71 +316,13 @@ function initEditor() {
     ) as NodeListOf<SVGElement>
     showPorts(ports, false)
   })
-  graph.on('node:embedded', ({node, currentParent, previousParent}) => {
-    // console.log('--- node embedded: ', node, currentParent, previousParent)
-    if (currentParent && currentParent.isNode()) {
-      if (previousParent?.id !== currentParent.id) {
-        save();
-        store.dispatch('graph/saveProcessor', { processorId: node.id, parentProcessorId: currentParent.id });
-      }
-      // let originSize = currentParent.prop('originSize')
-      // if (originSize == null) {
-      //   currentParent.prop('originSize', currentParent.getSize())
-      // }
-      // originSize = currentParent.prop('originSize')
-
-      // let originPosition = currentParent.prop('originPosition')
-      // if (originPosition == null) {
-      //   currentParent.prop('originPosition', currentParent.getPosition())
-      // }
-      // originPosition = currentParent.prop('originPosition')
-
-      // let x = originPosition.x
-      // let y = originPosition.y
-      // let cornerX = originPosition.x + originSize.width
-      // let cornerY = originPosition.y + originSize.height
-      // let hasChange = false
-
-      // const children = currentParent.getChildren()
-      // if (children) {
-      //   children.forEach((child) => {
-      //     const bbox = child.getBBox().inflate(10)
-      //     const corner = bbox.getCorner()
-
-      //     if (bbox.x < x) {
-      //       x = bbox.x
-      //       hasChange = true
-      //     }
-
-      //     if (bbox.y < y) {
-      //       y = bbox.y
-      //       hasChange = true
-      //     }
-
-      //     if (corner.x > cornerX) {
-      //       cornerX = corner.x
-      //       hasChange = true
-      //     }
-
-      //     if (corner.y > cornerY) {
-      //       cornerY = corner.y
-      //       hasChange = true
-      //     }
-      //   })
-      // }
-
-      // if (hasChange) {
-      //   currentParent.prop(
-      //       {
-      //         position: {x, y},
-      //         // size: {width: cornerX - x, height: cornerY - y},
-      //       },
-      //       // Note that we also pass a flag so that we know we shouldn't
-      //       // adjust the `originPosition` and `originSize` in our handlers.
-      //       {skipParentHandler: true},
-      //   )
-      // }
-    }
+  graph.on('node:change:parent', ({node}) => {
+    const parent = node.getParent();
+    const parentProcessorId = parent?.id || '';
+    const parentZIndex = parent?.getZIndex() || 0;
+    node.setZIndex(parentZIndex + 1);
+    save();
+    store.dispatch('graph/saveProcessor', { processorId: node.id, parentProcessorId: parentProcessorId });
   })
   graph.on('node:added', ({node, index, options}) => {
     const kind = get(node, 'data.kind');
@@ -456,9 +392,9 @@ function initEditor() {
   graph.bindKey('delete', () => {
     const cells = graph.getSelectedCells();
     forEach(cells, cell => {
-      if (cell.data.kind === 'otherwise') {
+      if (cell.data.kind === 'otherwise' && cell.getParent()) {
         ElMessage.warning('决策组件中不能没有otherwise')
-      } else if (cell.data.kind === 'when') {
+      } else if (cell.data.kind === 'when' && cell.getParent()) {
         const when = filter(cell.getParent()?.getChildren(), item => item.data.kind === 'when');
         if (when.length === 1) {
           ElMessage.warning('决策组件中至少要有一个when')
@@ -471,81 +407,85 @@ function initEditor() {
     })
   })
 
-  graph.on('node:change:size', ({node, current, previous}) => {
+  let isUpping = false;
+  graph.on('node:resize', ({x, y, node}) => {
+    isUpping = Math.abs(y - node.getPosition().y) < 20;
+  });
+
+  graph.on('node:change:size', ({node, current, previous, options}) => {
+    if (options.skipParentHandler) {
+      return
+    }
     // 决策分支内的when或otherwise, 向右|下改变size
     if (['when', 'otherwise'].includes(node.data.kind)) {
-      // console.log('--- size: ', node, current, previous)
       const choice = node.getParent();
       if (choice) {
-        const children = choice?.getChildren();
+        let originSize = choice.prop('originSize');
+        if (!originSize) {
+          choice.prop('originSize', choice.getSize())
+        }
+        originSize = choice.prop('originSize');
+        let originPosition = choice.prop('originPosition');
+        if (!originPosition) {
+          choice.prop('originPosition', choice.getPosition());
+        }
+        originPosition = choice.prop('originPosition');
+
+        const choice_x = originPosition.x;
+        const choice_y = originPosition.y;
+        const choice_corner_x = originPosition.x + originSize.width;
+        const choice_corner_y = originPosition.y + originSize.height;
         const padding = [68, 20, 48, 20];
-        let { x, y, width, height } = choice.getBBox();
-        let left = x + padding[3];
+
+        let x = choice_x + padding[3];
+        let y = choice_y + padding[0];
+        let cornerX = choice_corner_x - padding[1];
+        let cornerY = choice_corner_y - padding[2];
+
+        let hasChange = false;
+
+        const children = choice.getChildren();
+        // 改变的大小的when|otherwise节点在choice中的index
         const index = findIndex(children, item => item.id === node.id);
-        const my = current?.height - previous?.height;
-        let right = 0
-        children?.forEach((child, i) => {
-          const box = child.getBBox();
-          const r = box.x + box.width;
-          if (box.x < left) left = box.x;
-          if (r > right) right = r;
-          // if (i > index) {
-          //   child.prop('position', {x: box.x, y: box.y + my})
-          // }
-        });
-        choice.prop({
-          'size': {width: right - left + padding[1] + padding[3], height: height + my},
-        })
-      }
-    } else if (node.data.kind === 'choice') {
-      // 决策节点大小改变
-      const space = 20;
-      const padding = [68, space, 48, space];
-      const children = node.getChildren();
-      const { x, y, width, height } = node.getBBox();
-      let left = x + padding[3];
-      let top = y + padding[0];
-      let childY = 0
-      let childrenHeight = 0;
-      children?.forEach((child) => {
-        const childBbox = child.getBBox();
-        child.prop({position: {x: left, y: top + childY}, size: {width: width - space * 2, height: childBbox.height}});
-        childY += childBbox.height + space;
-        childrenHeight += childY;
-      });
-      const moreHeight = height - padding[0] - padding[2] - childrenHeight;
-      if (moreHeight) {
-        const len = children?.length;
-        const plit = moreHeight / len;
-        children?.forEach((child) => {
-          const size = child.getSize();
-          child.prop('size', { width: size.width, height: size.height + plit })
-        })
+        if (children) {
+          children.forEach((child, i) => {
+            const bbox = child.getBBox();
+            if (isUpping && i < index) {
+              child.prop('position', { x: bbox.x, y: bbox.y - (current.height - previous?.height) })
+            }
+            if (!isUpping && i > index) {
+              child.prop('position', { x: bbox.x, y: bbox.y + (current.height - previous?.height) })
+            }
+            const childPosition = child.prop('position');
+            const childSize = child.prop('size');
+            if (childPosition.x < x) {
+              x = childPosition.x;
+              hasChange = true;
+            }
+            if (childPosition.y < y) {
+              y = childPosition.y;
+              hasChange = true;
+            }
+            const corner = {x: childPosition.x + childSize.width, y: childPosition.y + childSize.height}
+            if (corner.x > cornerX) {
+              cornerX = corner.x;
+              hasChange = true;
+            }
+            if (corner.y > cornerY) {
+              cornerY = corner.y;
+              hasChange = true;
+            }
+          })
+        }
+        if (hasChange) {
+          choice.prop({
+            position: { x: x - padding[3], y: y - padding[0] },
+            size: { width: cornerX - x + padding[1] + padding[3], height: cornerY - y + padding[0] + padding[2] }
+          }, { skipParentHandler: true })
+        }
       }
     }
-  })
-  // graph.on('node:change:position', ({node, current, previous}) => {
-  //   // 移动位置，及 向上|左改变size
-  //   if (['when', 'otherwise'].includes(node.data.kind)) {
-  //     const choice = node.getParent();
-  //     if (choice) {
-  //       const mx = current.x - previous?.x;
-  //       const my = current.y - previous?.y;
-  //       const children = choice?.getChildren();
-  //       const index = findIndex(children, item => item.id === node.id);
-  //       let left;
-  //       children?.forEach((child, i) => {
-  //         const { x, y } = child.getPosition();
-  //         if (!left || x < left) {
-  //           left = x;
-  //         }
-  //         if (my && i < index) {
-  //           child.prop('position', {x, y: y + my});
-  //         }
-  //       })
-  //     }
-  //   }
-  // })
+  });
 
   // 节点移动后
   graph.on('node:moved',() => save())
