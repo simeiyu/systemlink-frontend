@@ -48,14 +48,17 @@ export default defineConfig({
         strictPort: true, // 若端口被占用,直接结束项目
         proxy: {
             "/systemlink": {
-                // target: "http://sp7.iamzju.com:30080/",
-                target: "http://10.88.36.131/",
+                target: "http://sp7.xuelangyun.com:30080/",
+                // target: "http://10.88.36.131/",
                 changeOrigin: true,
+                headers: {
+                  Cookie: 'sp7.sid=s%3ARgQVI1UXiasGs5Vpm_6a-2alCgQaMOv5.CeNzQLVyKW1PDMcsFPigc4eO43xM2RSU0mz5ob11g%2FA; Path=/; Expires=Thu, 17 Nov 2022 06:03:19 GMT; HttpOnly'
+                }
                 // rewrite: (path) => path.replace(/^\/api/, ""),
             },
             "/integration": {
-                // target: "http://sp7.iamzju.com:30080/",
-                target: " http://192.168.10.65:8080/",
+                target: "http://sp7.xuelangyun.com:30080/",
+                // target: " http://192.168.10.65:8080/",
                 changeOrigin: true,
                 // rewrite: (path) => path.replace(/^\/api/, ""),
             },

@@ -13,8 +13,8 @@ axios.defaults.ContentType = 'application/json;charset=UTF-8';
 const dist = __dirname + '/dist';
 const app = express();
 let port = 3004;
-let AppId = 77800;
-let NodeId = '99ec0780f39211ec84c5bfc02d1bcaa4';
+let AppId = 78242;
+let NodeId = 'ff88e450625f11ed9524e5a09a748e9c';
 let UserId = 1000184;
 let ComponentId = 15130;
 
@@ -31,24 +31,24 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/assets", express.static(dist + '/assets'))
 app.set('views', dist);
 
-app.use('/systemlink*', async (req, res, next) => {
-  const { originalUrl, method, params, body } = req;
-  let result;
-  switch(method) {
-    case 'GET':
-      result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`, method, params});
-      break;
-    case 'POST':
-      result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`,method, data: body});
-      break;
-    case 'DELETE':
-      result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`,method, params});
-      break;
-  }
-  const { status, data } = result;
-  res.send(data);
-  next();
-});
+// app.use('/systemlink*', async (req, res, next) => {
+//   const { originalUrl, method, params, body } = req;
+//   let result;
+//   switch(method) {
+//     case 'GET':
+//       result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`, method, params});
+//       break;
+//     case 'POST':
+//       result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`,method, data: body});
+//       break;
+//     case 'DELETE':
+//       result = await axios({ url: `${systemlinkEndpoint}${originalUrl}`,method, params});
+//       break;
+//   }
+//   const { status, data } = result;
+//   res.send(data);
+//   next();
+// });
 app.get('/sp/context', (req, res) => {
   res.send({
     success: true,
