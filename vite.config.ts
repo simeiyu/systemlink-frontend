@@ -4,7 +4,6 @@ import { viteCommonjs } from '@originjs/vite-plugin-commonjs'
 import {name} from "./package.json";
 // 按需加载必备插件
 import vue from "@vitejs/plugin-vue";
-const autoZip = require('./vite-plugins/auto-zip/plugin')
 import * as path from "path"; //gzip必备插件
 
 // 1. defineConfig: 不用 jsdoc 注解也可以获取类型提示

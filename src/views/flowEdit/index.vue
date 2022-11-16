@@ -581,9 +581,9 @@ function dropNode(evt: any, nodeData: any) {
 }
 
 function deleteNode(node) {
-  if (node.data.kind === 'otherwise') {
+  if (node.kind === 'otherwise') {
     ElMessage.warning('决策组件中不能没有otherwise')
-  } else if (node.data.kind === 'when') {
+  } else if (node.kind === 'when') {
     const when = filter(node.getParent()?.getChildren(), item => item.data.kind === 'when');
     if (when.length === 1) {
       ElMessage.warning('决策组件中至少要有一个when')

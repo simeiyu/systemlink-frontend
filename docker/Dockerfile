@@ -6,3 +6,4 @@ COPY package.json server.ts ./
 RUN npm --registry http://registry.npm.taobao.org i --only=production
 COPY dist ./dist
 CMD [ "bash" ]
+
